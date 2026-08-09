@@ -445,6 +445,21 @@
 
   /* 3D panel */
   #curtain-survey-app .csa-3d-card { grid-column: 1 / -1; }
+  #curtain-survey-app .csa-wall-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  @media (min-width: 560px) {
+    #curtain-survey-app .csa-wall-grid { grid-template-columns: 1fr 1fr; }
+  }
+  #curtain-survey-app .csa-wall-card {
+    background: #FBFDFE;
+    border: 1px solid var(--paper-line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  #curtain-survey-app .csa-wall-card svg { width: 100%; height: auto; display: block; }
   #curtain-survey-app .csa-3d-wrap {
     position: relative;
     width: 100%;
@@ -500,6 +515,20 @@
     border-bottom: 1.5px dashed currentColor;
     padding-bottom: 0;
   }
+  #curtain-survey-app .csa-3d-label.badge {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow: none;
+    box-shadow: 0 2px 6px rgba(15,37,64,0.4);
+  }
   #curtain-survey-app .csa-3d-label-input {
     position: absolute;
     transform: translate(-50%, -160%);
@@ -547,12 +576,25 @@
         <div class="csa-3d-hint" id="csa-3d-hint">숫자 탭: 값 입력 · 드래그: 회전 · 스크롤: 확대</div>
       </div>
       <div class="csa-3d-legend">
+        <span><i style="background:#14213D; border-radius:50%;"></i>벽면 A·B·C·D</span>
+        <span><i style="background:#2E8FA6; border-radius:50%;"></i>보는 위치(방 중앙)</span>
         <span><i style="background:#E07B1E;"></i>커튼박스 구간(고천장)</span>
         <span><i style="background:#8FC1D6;"></i>창문</span>
         <span><i style="background:#8A94A0;"></i>손잡이</span>
         <span><i style="background:#C94F4F;"></i>문 위치</span>
       </div>
       <div id="csa-pole-note"></div>
+    </div>
+
+    <div class="csa-diagram-card csa-3d-card">
+      <div class="csa-diagram-title">벽면별 도면 (A·B·C·D)</div>
+      <div class="csa-diagram-desc">각 벽면을 정면에서 바라본 도면입니다. 3D 미리보기의 A·B·C·D 배지와 같은 벽면입니다 (꺼둔 벽은 "벽 없음"으로 표시).</div>
+      <div class="csa-wall-grid">
+        <div class="csa-wall-card"><svg id="csa-svg-wall-a" viewBox="0 0 320 260"></svg></div>
+        <div class="csa-wall-card"><svg id="csa-svg-wall-b" viewBox="0 0 320 260"></svg></div>
+        <div class="csa-wall-card"><svg id="csa-svg-wall-c" viewBox="0 0 320 260"></svg></div>
+        <div class="csa-wall-card"><svg id="csa-svg-wall-d" viewBox="0 0 320 260"></svg></div>
+      </div>
     </div>
 
     <!-- LEFT: FORM -->
@@ -590,8 +632,8 @@
           </label>
         </div>
         <div class="csa-sub-field" id="csa-box-sub">
-          <div class="csa-hidden-io"><input type="number" id="csa-boxceiling"><input type="number" id="csa-boxwidth"><input type="number" id="csa-boxspan"></div>
-          <div class="csa-tap3d-hint" style="margin-top:6px;">천고·폭(창문벽에서 떨어진 거리)·길이(벽을 따라 뻗는 범위, 기본은 양쪽 벽까지) 값은 3D 화면에서 탭해서 입력하세요. 기둥을 이 구간에 세우면 일반 천고보다 더 높게 설치할 수 있어 별도로 확인합니다.</div>
+          <div class="csa-hidden-io"><input type="number" id="csa-boxceiling"><input type="number" id="csa-boxwidth"><input type="number" id="csa-boxspan"><input type="number" id="csa-boxoffsetx"></div>
+          <div class="csa-tap3d-hint" style="margin-top:6px;">천고·폭(창문벽에서 떨어진 거리)·길이(벽을 따라 뻗는 범위)·위치(좌측벽에서 거리) 값은 3D 화면에서 탭해서 입력하세요. 기둥을 이 구간에 세우면 일반 천고보다 더 높게 설치할 수 있어 별도로 확인합니다.</div>
         </div>
       </div>
 
@@ -794,6 +836,7 @@
     boxceiling: $('#csa-boxceiling'),
     boxwidth: $('#csa-boxwidth'),
     boxspan: $('#csa-boxspan'),
+    boxoffsetx: $('#csa-boxoffsetx'),
     wallback: $('#csa-wallback'),
     wallfront: $('#csa-wallfront'),
     wallleft: $('#csa-wallleft'),
@@ -820,6 +863,10 @@
     newBtn: $('#csa-new'),
     status: $('#csa-status'),
     svgDepth: $('#csa-svg-depth'),
+    svgWallA: $('#csa-svg-wall-a'),
+    svgWallB: $('#csa-svg-wall-b'),
+    svgWallC: $('#csa-svg-wall-c'),
+    svgWallD: $('#csa-svg-wall-d'),
     depthNote: $('#csa-depth-note'),
     poleNote: $('#csa-pole-note'),
     list: $('#csa-list'),
@@ -897,6 +944,7 @@
       boxCeiling: num(el.boxceiling.value),
       boxWidth: num(el.boxwidth.value),
       boxSpan: num(el.boxspan.value),
+      boxOffsetX: num(el.boxoffsetx.value),
       wallBack: el.wallback.checked,
       wallFront: el.wallfront.checked,
       wallLeft: el.wallleft.checked,
@@ -930,6 +978,7 @@
     el.boxceiling.value = s.boxCeiling ?? '';
     el.boxwidth.value = s.boxWidth ?? '';
     el.boxspan.value = s.boxSpan ?? '';
+    el.boxoffsetx.value = s.boxOffsetX ?? '';
     el.wallback.checked = s.wallBack !== false;
     el.wallfront.checked = s.wallFront !== false;
     el.wallleft.checked = s.wallLeft !== false;
@@ -1072,10 +1121,174 @@
     el.depthNote.innerHTML = '';
   }
 
+  function renderWallElevation(svg, wallKey, s) {
+    clear(svg);
+    const VW = 320, VH = 260;
+    const padL = 70, padR = 24, padT = 30, padB = 60;
+    const areaW = VW - padL - padR, areaH = VH - padT - padB;
+
+    const isEnabled = wallKey === 'A' ? s.wallBack !== false
+      : wallKey === 'C' ? s.wallFront !== false
+      : wallKey === 'D' ? s.wallLeft !== false
+      : s.wallRight !== false;
+
+    const letterLbl = svgEl('text', { x: 12, y: 20, fill: '#14213D', 'font-size': 13, 'font-weight': 700, 'font-family': "'IBM Plex Mono', monospace" });
+    letterLbl.textContent = wallKey;
+    svg.appendChild(letterLbl);
+
+    if (!isEnabled) {
+      const t = svgEl('text', { x: VW / 2, y: VH / 2, 'text-anchor': 'middle', fill: '#9AAAC0', 'font-size': 12.5, 'font-family': 'Inter' });
+      t.textContent = '벽 없음';
+      svg.appendChild(t);
+      return;
+    }
+
+    // span (horizontal extent) depends on which wall: A/C run along the room width, B/D along the depth
+    const span = (wallKey === 'A' || wallKey === 'C') ? s.width
+      : (s.depth != null ? s.depth : Math.max(Math.min(s.width * 0.6, 4000), 900));
+    const boxCeilingEff = s.hasBox ? (s.boxCeiling != null ? s.boxCeiling : s.ceiling + 300) : s.ceiling;
+    const boxExtraMm = boxCeilingEff - s.ceiling;
+    const boxShownOnThisWall = s.hasBox && wallKey !== 'C';
+    const topHeight = boxShownOnThisWall ? Math.max(s.ceiling, boxCeilingEff) : s.ceiling;
+
+    const scale = Math.min(areaW / span, areaH / topHeight);
+    const wallPxW = span * scale, wallPxH = s.ceiling * scale;
+    const x0 = padL + (areaW - span * scale) / 2;
+    const floorY = padT + areaH;
+    const ceilY = floorY - wallPxH;
+    const x1 = x0 + wallPxW;
+
+    // floor + wall outline
+    svg.appendChild(svgEl('line', { x1: x0 - 6, y1: floorY, x2: x1 + 6, y2: floorY, stroke: '#14213D', 'stroke-width': 2 }));
+    svg.appendChild(svgEl('rect', { x: x0, y: ceilY, width: wallPxW, height: wallPxH, fill: '#F1EDE4', stroke: '#14213D', 'stroke-width': 1.5 }));
+
+    // helper for placing things measured "from the wall-A corner" along a wall's span axis.
+    // Standing at the room's center and turning to face each wall in turn: facing A, right hand
+    // points toward B; facing B, right hand points toward C — both "natural" (offset 0 at the
+    // left edge). But facing C, right hand points toward D, and facing D, right hand points
+    // toward A — both mirrored relative to their own wall's natural axis (offset 0 at the right
+    // edge instead). C and D are drawn mirrored so the picture matches what you'd actually see
+    // standing in the middle of the room and turning to look at each wall.
+    const mirrored = wallKey === 'C' || wallKey === 'D';
+    const cornerX = mirrored ? x1 : x0;
+    function spanRect(offsetMm, widthMm) {
+      const w = widthMm * scale;
+      const x = mirrored ? cornerX - offsetMm * scale - w : cornerX + offsetMm * scale;
+      return { x, w, nearCornerEdge: mirrored ? x + w : x, farEdge: mirrored ? x : x + w };
+    }
+
+    // curtain box: full notch on A (its own wall) only; a small corner notch on B/D showing how far
+    // the box reaches out from the A corner along the side wall. C never shows box-related dimensions.
+    if (boxShownOnThisWall) {
+      const extraPx = Math.max(boxExtraMm * scale, 2);
+      const extraLabelText = (boxExtraMm >= 0 ? '+' : '') + boxExtraMm.toFixed(0);
+      const boxProtrudeMm = s.boxWidth != null ? s.boxWidth : 150;
+
+      if (wallKey === 'A') {
+        const boxSpanMm = Math.min(s.boxSpan != null ? s.boxSpan : s.width, s.width);
+        const boxPxW = boxSpanMm * scale;
+        const boxOffsetMm = s.boxOffsetX != null ? Math.max(Math.min(s.boxOffsetX, s.width - boxSpanMm), 0) : (s.width - boxSpanMm) / 2;
+        const bx = x0 + boxOffsetMm * scale;
+        const by = ceilY - extraPx;
+        svg.appendChild(svgEl('rect', {
+          x: bx, y: by, width: boxPxW, height: extraPx,
+          fill: '#E07B1E33', stroke: '#E07B1E', 'stroke-width': 1.3, 'stroke-dasharray': '3 2',
+        }));
+        const midY = by + Math.min(extraPx / 2, extraPx - 2);
+        const bl1 = svgEl('text', { x: bx + boxPxW / 2, y: midY - 5, 'text-anchor': 'middle', fill: '#B45E12', 'font-size': 10, 'font-weight': 700, 'font-family': "'IBM Plex Mono', monospace" });
+        bl1.textContent = boxCeilingEff.toFixed(0) + 'mm(' + extraLabelText + ')';
+        svg.appendChild(bl1);
+        const bl2 = svgEl('text', { x: bx + boxPxW / 2, y: midY + 8, 'text-anchor': 'middle', fill: '#B45E12', 'font-size': 9.5, 'font-family': "'IBM Plex Mono', monospace" });
+        bl2.textContent = '박스폭 ' + boxProtrudeMm.toFixed(0) + 'mm';
+        svg.appendChild(bl2);
+        // position of the box along the wall, as a dimension line from the left wall to its near edge
+        dimLine(svg, x0, floorY + 16, bx, floorY + 16, boxOffsetMm.toFixed(0) + 'mm', { color: '#E07B1E' });
+      } else {
+        // B and D: corner notch nearest wall A, width = box protrusion (D is mirrored, see spanRect)
+        const r = spanRect(0, Math.min(boxProtrudeMm, span));
+        const by = ceilY - extraPx;
+        svg.appendChild(svgEl('rect', {
+          x: r.x, y: by, width: r.w, height: extraPx,
+          fill: '#E07B1E33', stroke: '#E07B1E', 'stroke-width': 1.3, 'stroke-dasharray': '3 2',
+        }));
+        const labelX = r.farEdge + (mirrored ? -4 : 4);
+        const anchor = mirrored ? 'end' : 'start';
+        const bl1 = svgEl('text', { x: labelX, y: by + extraPx / 2 - 2, 'text-anchor': anchor, fill: '#B45E12', 'font-size': 9.5, 'font-weight': 700, 'font-family': "'IBM Plex Mono', monospace" });
+        bl1.textContent = '폭' + boxProtrudeMm.toFixed(0);
+        svg.appendChild(bl1);
+        const bl2 = svgEl('text', { x: labelX, y: by + extraPx / 2 + 10, 'text-anchor': anchor, fill: '#B45E12', 'font-size': 9.5, 'font-family': "'IBM Plex Mono', monospace" });
+        bl2.textContent = extraLabelText;
+        svg.appendChild(bl2);
+      }
+    }
+
+    // window, only on wall A — size and position shown as proper dimension lines
+    let extraDimRow = false; // whether an inner dimension row was drawn (pushes the outer span dim further out)
+    if (wallKey === 'A' && s.winEnabled !== false) {
+      const winWidthMm = s.winWidth != null ? s.winWidth : s.width * 0.5;
+      const winHeightMm = s.winHeight != null ? s.winHeight : s.ceiling * 0.5;
+      const winSillMm = s.winSill != null ? s.winSill : s.ceiling * 0.25;
+      const winOffsetMm = s.winOffsetX != null ? s.winOffsetX : (s.width - winWidthMm) / 2;
+      const wx = x0 + winOffsetMm * scale;
+      const wPxW = winWidthMm * scale, wPxH = winHeightMm * scale;
+      const wy = floorY - (winSillMm + winHeightMm) * scale;
+      svg.appendChild(svgEl('rect', {
+        x: wx, y: wy, width: wPxW, height: wPxH,
+        fill: '#8FC1D655', stroke: '#2E8FA6', 'stroke-width': 1.3,
+      }));
+
+      // width, directly above the window
+      dimLine(svg, wx, wy - 12, wx + wPxW, wy - 12, winWidthMm.toFixed(0) + 'mm', { color: '#2E8FA6' });
+      // height, to the right of the window
+      dimLine(svg, wx + wPxW + 14, wy, wx + wPxW + 14, wy + wPxH, winHeightMm.toFixed(0) + 'mm', { color: '#2E8FA6' });
+      // offset from the left wall, along an inner row near the floor
+      dimLine(svg, x0, floorY + 16, wx, floorY + 16, winOffsetMm.toFixed(0) + 'mm', { color: '#2E8FA6' });
+      // sill height, along an inner column near the left wall
+      dimLine(svg, x0 - 20, floorY, x0 - 20, wy + wPxH, winSillMm.toFixed(0) + 'mm', { color: '#2E8FA6' });
+      extraDimRow = true;
+    }
+
+    // door, drawn on whichever wall it's assigned to — size and position as dimension lines
+    const doorWallLetter = { left: 'D', right: 'B', front: 'C' }[s.doorWall] || 'D';
+    if (s.doorEnabled && wallKey === doorWallLetter) {
+      const doorOffsetMm = s.doorOffset != null ? s.doorOffset : 300;
+      const doorWMm = 800, doorHMm = 2000;
+      const r = spanRect(doorOffsetMm, doorWMm);
+      const dx = r.x, dPxW = r.w;
+      const dPxH = doorHMm * scale;
+      const dy = floorY - dPxH;
+      svg.appendChild(svgEl('rect', {
+        x: dx, y: dy, width: dPxW, height: dPxH,
+        fill: '#C94F4F33', stroke: '#C94F4F', 'stroke-width': 1.3,
+      }));
+
+      // width, directly above the door
+      dimLine(svg, dx, dy - 12, dx + dPxW, dy - 12, doorWMm + 'mm', { color: '#C94F4F' });
+      // height, on whichever side has room without running off the wall's edges
+      const doorHeightOnRight = dx + dPxW + 14 + 30 < x1;
+      const dhx = doorHeightOnRight ? dx + dPxW + 14 : dx - 14;
+      dimLine(svg, dhx, dy, dhx, dy + dPxH, doorHMm + 'mm', { color: '#C94F4F' });
+      // offset from the wall's near corner, along an inner row near the floor
+      dimLine(svg, cornerX, floorY + 16, r.nearCornerEdge, floorY + 16, doorOffsetMm.toFixed(0) + 'mm', { color: '#C94F4F' });
+      extraDimRow = true;
+    }
+
+    // dimensions: span + ceiling height, pushed one row/column further out when a window or door
+    // is already using the inner row/column so nothing overlaps
+    const spanDimY = floorY + (extraDimRow ? 34 : 16);
+    const heightDimX = x0 - (extraDimRow ? 44 : 20);
+    dimLine(svg, x0, spanDimY, x1, spanDimY, span.toFixed(0) + 'mm', { color: '#5C7089' });
+    dimLine(svg, heightDimX, floorY, heightDimX, ceilY, s.ceiling.toFixed(0) + 'mm', { color: '#5C7089' });
+  }
+
   function render() {
     const s = readState();
     updatePoleNote(s);
     renderDepth(s);
+    renderWallElevation(el.svgWallA, 'A', s);
+    renderWallElevation(el.svgWallB, 'B', s);
+    renderWallElevation(el.svgWallC, 'C', s);
+    renderWallElevation(el.svgWallD, 'D', s);
     render3D(s);
   }
 
@@ -1198,9 +1411,9 @@
     labelsContainer3d.innerHTML = '';
     three.labels = labelDefs.map((l) => {
       const d = document.createElement('div');
-      d.className = 'csa-3d-label' + (l.editTarget ? ' editable' : '');
+      d.className = 'csa-3d-label' + (l.editTarget ? ' editable' : '') + (l.badge ? ' badge' : '');
       d.textContent = l.text;
-      d.style.color = '#' + l.color.toString(16).padStart(6, '0');
+      d.style.color = l.badge ? '' : ('#' + l.color.toString(16).padStart(6, '0'));
       if (l.editTarget) {
         d.style.pointerEvents = 'auto';
         d.title = '탭하여 값 수정';
@@ -1244,6 +1457,10 @@
     labelsContainer3d.replaceChild(input, labelDiv);
     input.focus();
     input.select();
+  }
+
+  function addPointLabel3D(labelDefs, point, text, colorHex, badge) {
+    labelDefs.push({ p1: point.clone(), p2: point.clone(), text, color: colorHex, editTarget: null, editValueMm: null, badge: !!badge });
   }
 
   function addDim3D(group, labelDefs, edgeP1, edgeP2, dimP1, dimP2, text, colorHex, editTarget, editValueMm) {
@@ -1294,7 +1511,7 @@
     const M = 1000; // mm -> m
     const W = s.width / M;
     const H = s.ceiling / M;
-    const D = s.depth ? s.depth / M : Math.max(Math.min(W * 0.6, 1.8), 0.9); // real if provided, else schematic
+    const D = s.depth ? s.depth / M : Math.max(Math.min(W * 0.6, 4.0), 0.9); // real if provided, else schematic
 
     // floor
     const floor = box(W, 0.02, D, 0xC9B08C);
@@ -1307,24 +1524,50 @@
       const backWall = box(W, H, wallT, 0xF1EDE4);   // window wall, z = 0
       backWall.position.set(W / 2, H / 2, -wallT / 2);
       group.add(backWall);
+      addPointLabel3D(labelDefs, new THREE.Vector3(W / 2, H * 0.9, 0.08), 'A', 0x14213D, true);
     }
 
     if (s.wallFront !== false) {
       const frontWall = box(W, H, wallT, 0xE9E4D8, { opacity: 0.9 }); // opposite wall, z = D
       frontWall.position.set(W / 2, H / 2, D + wallT / 2);
       group.add(frontWall);
+      addPointLabel3D(labelDefs, new THREE.Vector3(W / 2, H * 0.9, D - 0.08), 'C', 0x14213D, true);
     }
 
     if (s.wallLeft !== false) {
       const leftWall = box(wallT, H, D, 0xE7E2D6);   // x = 0
       leftWall.position.set(-wallT / 2, H / 2, D / 2);
       group.add(leftWall);
+      addPointLabel3D(labelDefs, new THREE.Vector3(0.08, H * 0.9, D / 2), 'D', 0x14213D, true);
     }
 
     if (s.wallRight !== false) {
       const rightWall = box(wallT, H, D, 0xE7E2D6, { opacity: 0.9 }); // x = W
       rightWall.position.set(W + wallT / 2, H / 2, D / 2);
       group.add(rightWall);
+      addPointLabel3D(labelDefs, new THREE.Vector3(W - 0.08, H * 0.9, D / 2), 'B', 0x14213D, true);
+    }
+
+    // person figure at the room's center — marks the vantage point the A/B/C/D wall drawings are seen from
+    {
+      const personX = W / 2, personZ = D / 2;
+      const legH = 0.85, bodyH = 0.55, headR = 0.13;
+      const legs = box(0.14, legH, 0.14, 0x3A5068);
+      legs.position.set(personX, legH / 2, personZ);
+      group.add(legs);
+      const body = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.16, 0.2, bodyH, 16),
+        new THREE.MeshStandardMaterial({ color: 0x2E8FA6 })
+      );
+      body.position.set(personX, legH + bodyH / 2, personZ);
+      group.add(body);
+      const head = new THREE.Mesh(
+        new THREE.SphereGeometry(headR, 16, 16),
+        new THREE.MeshStandardMaterial({ color: 0xE8C39E })
+      );
+      head.position.set(personX, legH + bodyH + headR, personZ);
+      group.add(head);
+      addPointLabel3D(labelDefs, new THREE.Vector3(personX, legH + bodyH + headR * 2 + 0.14, personZ), '보는 위치', 0x2E8FA6, false);
     }
 
     // core dimension lines: width, depth, ceiling height (all tap-to-edit)
@@ -1439,8 +1682,11 @@
       const boxSpanW = Math.min(boxSpanEffMm / M, W); // capped so it never exceeds the side walls
       const boxProtrudeEffMm = s.boxWidth != null ? s.boxWidth : 150; // distance the box sticks out from the window wall
       const boxOutward = boxProtrudeEffMm / M;
+      const boxOffsetXEffMm = s.boxOffsetX != null ? s.boxOffsetX : Math.round((W * M - boxSpanEffMm) / 2); // defaults to centered
+      const boxOffsetXM = Math.max(Math.min(boxOffsetXEffMm / M, W - boxSpanW), 0);
+      const boxLeftX = boxOffsetXM, boxRightX = boxOffsetXM + boxSpanW;
       const cbox = box(boxSpanW, extraM, boxOutward, 0xE07B1E, { opacity: 0.85 });
-      cbox.position.set(W / 2, H + extraM / 2, boxOutward / 2);
+      cbox.position.set(boxLeftX + boxSpanW / 2, H + extraM / 2, boxOutward / 2);
       group.add(cbox);
       const extraMm = boxCeilingEff - s.ceiling;
       const boxLabel = '박스천고 ' + boxCeilingEff.toFixed(0) + (extraMm >= 0 ? '(+' + extraMm.toFixed(0) + ')' : '(' + extraMm.toFixed(0) + ')');
@@ -1451,15 +1697,22 @@
 
       const boxProtrudeLabel = '박스폭 ' + (s.boxWidth != null ? s.boxWidth.toFixed(0) : '~' + boxProtrudeEffMm);
       addDim3D(group, labelDefs,
-        new THREE.Vector3(W / 2, H, 0), new THREE.Vector3(W / 2, H, boxOutward),
-        new THREE.Vector3(W / 2, H - 0.22, 0), new THREE.Vector3(W / 2, H - 0.22, boxOutward),
+        new THREE.Vector3(boxLeftX + boxSpanW / 2, H, 0), new THREE.Vector3(boxLeftX + boxSpanW / 2, H, boxOutward),
+        new THREE.Vector3(boxLeftX + boxSpanW / 2, H - 0.22, 0), new THREE.Vector3(boxLeftX + boxSpanW / 2, H - 0.22, boxOutward),
         boxProtrudeLabel, 0xE07B1E, el.boxwidth, boxProtrudeEffMm);
 
       const boxSpanLabel = '박스길이 ' + (s.boxSpan != null ? s.boxSpan.toFixed(0) : '~' + boxSpanEffMm);
       addDim3D(group, labelDefs,
-        new THREE.Vector3(W / 2 - boxSpanW / 2, boxCeilingM, 0), new THREE.Vector3(W / 2 + boxSpanW / 2, boxCeilingM, 0),
-        new THREE.Vector3(W / 2 - boxSpanW / 2, boxCeilingM + 0.4, 0), new THREE.Vector3(W / 2 + boxSpanW / 2, boxCeilingM + 0.4, 0),
+        new THREE.Vector3(boxLeftX, boxCeilingM, 0), new THREE.Vector3(boxRightX, boxCeilingM, 0),
+        new THREE.Vector3(boxLeftX, boxCeilingM + 0.4, 0), new THREE.Vector3(boxRightX, boxCeilingM + 0.4, 0),
         boxSpanLabel, 0xE07B1E, el.boxspan, boxSpanEffMm);
+
+      // position along the wall: distance from the left wall to the box's near (left) edge
+      const boxOffsetLabel = '박스위치 ' + (s.boxOffsetX != null ? s.boxOffsetX.toFixed(0) : '~' + boxOffsetXEffMm);
+      addDim3D(group, labelDefs,
+        new THREE.Vector3(0, 0.05, 0.03), new THREE.Vector3(boxLeftX, 0.05, 0.03),
+        new THREE.Vector3(0, 0.05, 0.2), new THREE.Vector3(boxLeftX, 0.05, 0.2),
+        boxOffsetLabel, 0xE07B1E, el.boxoffsetx, boxOffsetXEffMm);
     }
 
     // door marker (schematic size, placed at the given wall + offset)
@@ -1734,7 +1987,7 @@
   }
 
   // ---------- Events ----------
-  [el.name, el.width, el.depth, el.ceiling, el.boxceiling, el.boxwidth, el.boxspan, el.windepth, el.winwidth, el.winheight, el.winsill, el.winoffsetx, el.handledepth, el.handleheight, el.dooroffset, el.memo]
+  [el.name, el.width, el.depth, el.ceiling, el.boxceiling, el.boxwidth, el.boxspan, el.boxoffsetx, el.windepth, el.winwidth, el.winheight, el.winsill, el.winoffsetx, el.handledepth, el.handleheight, el.dooroffset, el.memo]
     .forEach((input) => input.addEventListener('input', render));
   [el.hasbox, el.wallback, el.wallfront, el.wallleft, el.wallright, el.winenabled, el.winprot, el.handleprot, el.door].forEach((cb) =>
     cb.addEventListener('change', () => { syncSubFields(); render(); })
