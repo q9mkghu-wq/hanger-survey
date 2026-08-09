@@ -570,7 +570,7 @@
           <input type="number" id="csa-depth">
           <input type="number" id="csa-ceiling" value="2400">
         </div>
-        <div class="csa-tap3d-hint">가로·안길이·천장고는 오른쪽 3D 화면의 숫자를 탭해서 입력하세요.</div>
+        <div class="csa-tap3d-hint">가로·세로·천고는 오른쪽 3D 화면의 숫자를 탭해서 입력하세요.</div>
       </div>
 
       <div class="csa-panel">
@@ -591,7 +591,7 @@
         </div>
         <div class="csa-sub-field" id="csa-box-sub">
           <div class="csa-hidden-io"><input type="number" id="csa-boxceiling"><input type="number" id="csa-boxwidth"><input type="number" id="csa-boxspan"></div>
-          <div class="csa-tap3d-hint" style="margin-top:6px;">천장고·폭(창문벽에서 떨어진 거리)·길이(벽을 따라 뻗는 범위, 기본은 양쪽 벽까지) 값은 3D 화면에서 탭해서 입력하세요. 기둥을 이 구간에 세우면 일반 천장고보다 더 높게 설치할 수 있어 별도로 확인합니다.</div>
+          <div class="csa-tap3d-hint" style="margin-top:6px;">천고·폭(창문벽에서 떨어진 거리)·길이(벽을 따라 뻗는 범위, 기본은 양쪽 벽까지) 값은 3D 화면에서 탭해서 입력하세요. 기둥을 이 구간에 세우면 일반 천고보다 더 높게 설치할 수 있어 별도로 확인합니다.</div>
         </div>
       </div>
 
@@ -700,7 +700,7 @@
           <input type="number" inputmode="decimal" id="csa-bracket" placeholder="제품 사양서 참고">
         </label>
         <label class="csa-field" style="margin-bottom:0;">
-          <div class="csa-field-label">기둥 설치에 필요한 최소 천장고 <span class="csa-unit">mm</span></div>
+          <div class="csa-field-label">기둥 설치에 필요한 최소 천고 <span class="csa-unit">mm</span></div>
           <input type="number" inputmode="decimal" id="csa-minclear" placeholder="제품 사양서 참고">
         </label>
       </div>
@@ -762,9 +762,6 @@
   const db = firebase.firestore();
   const COLLECTION = 'hanger_survey_kv';
 
-  // Firestore-backed replacement for Claude's artifact window.storage API.
-  // Same get/set/delete/list shape as before, so the rest of the app is unchanged —
-  // but now every device reading/writing this Firebase project shares the same data.
   window.storage = {
     async get(key) {
       const snap = await db.collection(COLLECTION).doc(key).get();
@@ -1389,7 +1386,7 @@
       '가로 ' + s.width.toFixed(0), 0x14213D, el.width, s.width);
 
     const depthEffMm = Math.round(D * M);
-    const depthLabel = '안길이 ' + (s.depth != null ? s.depth.toFixed(0) : '~' + depthEffMm);
+    const depthLabel = '세로 ' + (s.depth != null ? s.depth.toFixed(0) : '~' + depthEffMm);
     addDim3D(group, labelDefs,
       new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, D),
       new THREE.Vector3(0.25, 0, 0), new THREE.Vector3(0.25, 0, D),
@@ -1398,7 +1395,7 @@
     addDim3D(group, labelDefs,
       new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, H, 0),
       new THREE.Vector3(0.25, 0, 0.25), new THREE.Vector3(0.25, H, 0.25),
-      '천장고 ' + s.ceiling.toFixed(0), 0x146366, el.ceiling, s.ceiling);
+      '천고 ' + s.ceiling.toFixed(0), 0x146366, el.ceiling, s.ceiling);
 
     // window: size and position are all tap-to-edit, protrusion depth stays real
     if (s.winEnabled !== false) {
@@ -1497,7 +1494,7 @@
       cbox.position.set(W / 2, H + extraM / 2, boxOutward / 2);
       group.add(cbox);
       const extraMm = boxCeilingEff - s.ceiling;
-      const boxLabel = '박스천장 ' + boxCeilingEff.toFixed(0) + (extraMm >= 0 ? '(+' + extraMm.toFixed(0) + ')' : '(' + extraMm.toFixed(0) + ')');
+      const boxLabel = '박스천고 ' + boxCeilingEff.toFixed(0) + (extraMm >= 0 ? '(+' + extraMm.toFixed(0) + ')' : '(' + extraMm.toFixed(0) + ')');
       addDim3D(group, labelDefs,
         new THREE.Vector3(W, H, 0.03), new THREE.Vector3(W, boxCeilingM, 0.03),
         new THREE.Vector3(W - 0.25, H, 0.03), new THREE.Vector3(W - 0.25, boxCeilingM, 0.03),
@@ -1603,7 +1600,7 @@
           ${thumbHtml}
           <div style="flex:1; min-width:0;">
             <div class="csa-record-name">${escapeHtml(item.name || '이름 없음')}</div>
-            <div class="csa-record-meta">가로 ${item.width ?? '-'}mm · 천장고 ${item.ceiling ?? '-'}mm${boxTxt}</div>
+            <div class="csa-record-meta">가로 ${item.width ?? '-'}mm · 천고 ${item.ceiling ?? '-'}mm${boxTxt}</div>
           </div>
           <button class="csa-record-export" data-id="${item.id}" title="파일로 내보내기">⬇</button>
           <button class="csa-record-del" data-id="${item.id}" title="삭제">✕</button>
@@ -1659,7 +1656,7 @@
       : '<p class="muted">첨부된 사진 없음</p>';
 
     const boxRows = item.hasBox
-      ? fmtRow('커튼박스 구간 천장고', item.boxCeiling != null ? item.boxCeiling + 'mm' : '(미입력)')
+      ? fmtRow('커튼박스 구간 천고', item.boxCeiling != null ? item.boxCeiling + 'mm' : '(미입력)')
         + fmtRow('커튼박스 폭(벽에서 거리)', item.boxWidth != null ? item.boxWidth + 'mm' : '(미입력)')
         + fmtRow('커튼박스 길이', item.boxSpan != null ? item.boxSpan + 'mm' : '(미입력, 양쪽 벽까지)')
       : '';
@@ -1692,14 +1689,14 @@
         <div class="muted">저장 시각: ${escapeHtml(savedDate)}</div>
         <table>
           ${fmtRow('가로', item.width != null ? item.width + 'mm' : '-')}
-          ${fmtRow('안길이', item.depth != null ? item.depth + 'mm' : '(추정)')}
-          ${fmtRow('천장고', item.ceiling != null ? item.ceiling + 'mm' : '-')}
+          ${fmtRow('세로', item.depth != null ? item.depth + 'mm' : '(추정)')}
+          ${fmtRow('천고', item.ceiling != null ? item.ceiling + 'mm' : '-')}
           ${boxRows}
           ${wallRows}
           ${winRows}
           ${doorRows}
           ${fmtRow('행거장 단 깊이', item.bracket != null ? item.bracket + 'mm' : null)}
-          ${fmtRow('기둥 필요 최소 천장고', item.minClear != null ? item.minClear + 'mm' : null)}
+          ${fmtRow('기둥 필요 최소 천고', item.minClear != null ? item.minClear + 'mm' : null)}
           ${fmtRow('메모', item.memo || null)}
         </table>
         ${photosHtml}
@@ -1770,7 +1767,7 @@
   async function saveRoom() {
     const s = readState();
     if (!s.width && !s.ceiling) {
-      el.status.textContent = '최소한 가로 길이나 천장고를 입력해주세요.';
+      el.status.textContent = '최소한 가로 길이나 천고를 입력해주세요.';
       return;
     }
     const id = currentId || (Date.now().toString(36) + Math.random().toString(36).slice(2, 7));
