@@ -783,8 +783,10 @@
               <option value="front">front</option>
             </select>
             <input type="number" id="csa-dooroffset">
+            <input type="number" id="csa-doorwidth">
+            <input type="number" id="csa-doorheight">
           </div>
-          <div class="csa-tap3d-hint" style="margin-top:6px;">문이 있는 벽은 3D 화면 우측 상단 "문" 버튼 아래 D·B·C 버튼으로 고르고, 거리는 3D 화면에서 탭해서 입력하세요.</div>
+          <div class="csa-tap3d-hint" style="margin-top:6px;">문이 있는 벽은 3D 화면 우측 상단 "문" 버튼 아래 D·B·C 버튼으로 고르고, 폭·높이·거리는 3D 화면에서 탭해서 입력하세요.</div>
         </div>
       </div>
 
@@ -915,6 +917,8 @@
     doorSub: $('#csa-door-sub'),
     doorwall: $('#csa-doorwall'),
     dooroffset: $('#csa-dooroffset'),
+    doorwidth: $('#csa-doorwidth'),
+    doorheight: $('#csa-doorheight'),
     memo: $('#csa-memo'),
     save: $('#csa-save'),
     newBtn: $('#csa-new'),
@@ -1019,6 +1023,8 @@
       doorEnabled: el.door.checked,
       doorWall: el.doorwall.value,
       doorOffset: num(el.dooroffset.value),
+      doorWidth: num(el.doorwidth.value),
+      doorHeight: num(el.doorheight.value),
       memo: el.memo.value,
     };
   }
@@ -1053,6 +1059,8 @@
     el.door.checked = s.doorEnabled !== false;
     el.doorwall.value = s.doorWall || 'left';
     el.dooroffset.value = s.doorOffset ?? '';
+    el.doorwidth.value = s.doorWidth ?? '';
+    el.doorheight.value = s.doorHeight ?? '';
     el.memo.value = s.memo || '';
     syncSubFields();
     render();
@@ -1309,7 +1317,8 @@
     const doorWallLetter = { left: 'D', right: 'B', front: 'C' }[s.doorWall] || 'D';
     if (s.doorEnabled && wallKey === doorWallLetter) {
       const doorOffsetMm = s.doorOffset != null ? s.doorOffset : 300;
-      const doorWMm = 800, doorHMm = 2000;
+      const doorWMm = s.doorWidth != null ? s.doorWidth : 800;
+      const doorHMm = s.doorHeight != null ? s.doorHeight : 2000;
       const r = spanRect(doorOffsetMm, doorWMm);
       const dx = r.x, dPxW = r.w;
       const dPxH = doorHMm * scale;
@@ -1838,12 +1847,16 @@
         boxOffsetLabel, 0xE07B1E, el.boxoffsetx, boxOffsetXEffMm);
     }
 
-    // door marker (schematic size, placed at the given wall + offset)
+    // door marker (size + position tap-to-edit, placed at the given wall + offset)
     if (s.doorEnabled) {
       const doorOffsetEff = s.doorOffset != null ? s.doorOffset : 300;
-      const doorW = 0.8, doorH = 2.0;
+      const doorWEffMm = s.doorWidth != null ? s.doorWidth : 800;
+      const doorHEffMm = s.doorHeight != null ? s.doorHeight : 2000;
+      const doorW = doorWEffMm / M, doorH = doorHEffMm / M;
       const offsetM = Math.max(doorOffsetEff / M, 0);
       const doorLabel = '문위치 ' + (s.doorOffset != null ? doorOffsetEff.toFixed(0) : '~' + doorOffsetEff.toFixed(0));
+      const doorWidthLabel = '문폭 ' + (s.doorWidth != null ? s.doorWidth.toFixed(0) : '~' + doorWEffMm);
+      const doorHeightLabel = '문높이 ' + (s.doorHeight != null ? s.doorHeight.toFixed(0) : '~' + doorHEffMm);
       let doorMesh;
       if (s.doorWall === 'right') {
         const z = Math.min(offsetM + doorW / 2, D - doorW / 2 > 0 ? D - 0.02 : D / 2);
@@ -1853,6 +1866,14 @@
           new THREE.Vector3(W, 0.05, 0), new THREE.Vector3(W, 0.05, offsetM),
           new THREE.Vector3(W - 0.25, 0.05, 0), new THREE.Vector3(W - 0.25, 0.05, offsetM),
           doorLabel, 0xC94F4F, el.dooroffset, doorOffsetEff);
+        addDim3D(group, labelDefs,
+          new THREE.Vector3(W, doorH, z - doorW / 2), new THREE.Vector3(W, doorH, z + doorW / 2),
+          new THREE.Vector3(W - 0.16, doorH + 0.1, z - doorW / 2), new THREE.Vector3(W - 0.16, doorH + 0.1, z + doorW / 2),
+          doorWidthLabel, 0xC94F4F, el.doorwidth, doorWEffMm);
+        addDim3D(group, labelDefs,
+          new THREE.Vector3(W, 0, z + doorW / 2 + 0.06), new THREE.Vector3(W, doorH, z + doorW / 2 + 0.06),
+          new THREE.Vector3(W - 0.16, 0, z + doorW / 2 + 0.06), new THREE.Vector3(W - 0.16, doorH, z + doorW / 2 + 0.06),
+          doorHeightLabel, 0xC94F4F, el.doorheight, doorHEffMm);
       } else if (s.doorWall === 'front') {
         const x = Math.min(offsetM + doorW / 2, W - 0.02 > doorW / 2 ? W - 0.02 : W / 2);
         doorMesh = box(doorW, doorH, 0.05, 0xC94F4F, { opacity: 0.65 });
@@ -1861,6 +1882,14 @@
           new THREE.Vector3(0, 0.05, D), new THREE.Vector3(offsetM, 0.05, D),
           new THREE.Vector3(0, 0.05, D - 0.25), new THREE.Vector3(offsetM, 0.05, D - 0.25),
           doorLabel, 0xC94F4F, el.dooroffset, doorOffsetEff);
+        addDim3D(group, labelDefs,
+          new THREE.Vector3(x - doorW / 2, doorH, D), new THREE.Vector3(x + doorW / 2, doorH, D),
+          new THREE.Vector3(x - doorW / 2, doorH + 0.1, D - 0.16), new THREE.Vector3(x + doorW / 2, doorH + 0.1, D - 0.16),
+          doorWidthLabel, 0xC94F4F, el.doorwidth, doorWEffMm);
+        addDim3D(group, labelDefs,
+          new THREE.Vector3(x + doorW / 2 + 0.06, 0, D), new THREE.Vector3(x + doorW / 2 + 0.06, doorH, D),
+          new THREE.Vector3(x + doorW / 2 + 0.06, 0, D - 0.16), new THREE.Vector3(x + doorW / 2 + 0.06, doorH, D - 0.16),
+          doorHeightLabel, 0xC94F4F, el.doorheight, doorHEffMm);
       } else { // left (default)
         const z = Math.min(offsetM + doorW / 2, D - doorW / 2 > 0 ? D - 0.02 : D / 2);
         doorMesh = box(0.05, doorH, doorW, 0xC94F4F, { opacity: 0.65 });
@@ -1869,6 +1898,14 @@
           new THREE.Vector3(0, 0.05, 0), new THREE.Vector3(0, 0.05, offsetM),
           new THREE.Vector3(0.25, 0.05, 0), new THREE.Vector3(0.25, 0.05, offsetM),
           doorLabel, 0xC94F4F, el.dooroffset, doorOffsetEff);
+        addDim3D(group, labelDefs,
+          new THREE.Vector3(0, doorH, z - doorW / 2), new THREE.Vector3(0, doorH, z + doorW / 2),
+          new THREE.Vector3(0.16, doorH + 0.1, z - doorW / 2), new THREE.Vector3(0.16, doorH + 0.1, z + doorW / 2),
+          doorWidthLabel, 0xC94F4F, el.doorwidth, doorWEffMm);
+        addDim3D(group, labelDefs,
+          new THREE.Vector3(0, 0, z + doorW / 2 + 0.06), new THREE.Vector3(0, doorH, z + doorW / 2 + 0.06),
+          new THREE.Vector3(0.16, 0, z + doorW / 2 + 0.06), new THREE.Vector3(0.16, doorH, z + doorW / 2 + 0.06),
+          doorHeightLabel, 0xC94F4F, el.doorheight, doorHEffMm);
       }
       group.add(doorMesh);
     }
@@ -2110,7 +2147,7 @@
   }
 
   // ---------- Events ----------
-  [el.name, el.width, el.depth, el.ceiling, el.boxceiling, el.boxwidth, el.boxspan, el.boxoffsetx, el.windepth, el.winwidth, el.winheight, el.winsill, el.winoffsetx, el.handledepth, el.handleheight, el.dooroffset, el.memo]
+  [el.name, el.width, el.depth, el.ceiling, el.boxceiling, el.boxwidth, el.boxspan, el.boxoffsetx, el.windepth, el.winwidth, el.winheight, el.winsill, el.winoffsetx, el.handledepth, el.handleheight, el.dooroffset, el.doorwidth, el.doorheight, el.memo]
     .forEach((input) => input.addEventListener('input', render));
   [el.hasbox, el.wallback, el.wallfront, el.wallleft, el.wallright, el.winenabled, el.winprot, el.handleprot, el.door].forEach((cb) =>
     cb.addEventListener('change', () => { syncSubFields(); render(); })
