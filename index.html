@@ -611,38 +611,55 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<!-- Firebase (Firestore) — shared "저장된 방" storage across every device -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
-  // localStorage-backed replacement for Claude's artifact window.storage API,
-  // so "저장된 방" keeps working once this app is hosted on its own (GitHub Pages / Vercel / Firebase).
-  window.storage = (function () {
-    const PREFIX = 'csa_hanger_survey_';
-    return {
-      async get(key) {
-        const raw = localStorage.getItem(PREFIX + key);
-        if (raw === null) throw new Error('Key not found: ' + key);
-        return { key, value: raw };
-      },
-      async set(key, value) {
-        localStorage.setItem(PREFIX + key, value);
-        return { key, value };
-      },
-      async delete(key) {
-        localStorage.removeItem(PREFIX + key);
-        return { key, deleted: true };
-      },
-      async list(prefix) {
-        const keys = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          if (k && k.indexOf(PREFIX) === 0) {
-            const shortKey = k.slice(PREFIX.length);
-            if (!prefix || shortKey.indexOf(prefix) === 0) keys.push(shortKey);
-          }
-        }
-        return { keys };
-      },
-    };
-  })();
+  // ======================================================================
+  // 1) Firebase 콘솔(https://console.firebase.google.com)에서
+  //    프로젝트 설정 → 일반 → "내 앱" → 웹 앱(</>) 추가 후 나오는
+  //    firebaseConfig 값을 그대로 아래에 붙여넣으세요.
+  // ======================================================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyB09DJJw1Q2Vm0xW5IvnSCaIQEja5PHwYk",
+    authDomain: "hanger-survey.firebaseapp.com",
+    projectId: "hanger-survey",
+    storageBucket: "hanger-survey.firebasestorage.app",
+    messagingSenderId: "1026732408882",
+    appId: "1:1026732408882:web:fb02c65ed129548709bc2b",
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const COLLECTION = 'hanger_survey_kv';
+
+  // Firestore-backed replacement for Claude's artifact window.storage API.
+  // Same get/set/delete/list shape as before, so the rest of the app is unchanged —
+  // but now every device reading/writing this Firebase project shares the same data.
+  window.storage = {
+    async get(key) {
+      const snap = await db.collection(COLLECTION).doc(key).get();
+      if (!snap.exists) throw new Error('Key not found: ' + key);
+      return { key, value: snap.data().value };
+    },
+    async set(key, value) {
+      await db.collection(COLLECTION).doc(key).set({ value, updatedAt: Date.now() });
+      return { key, value };
+    },
+    async delete(key) {
+      await db.collection(COLLECTION).doc(key).delete();
+      return { key, deleted: true };
+    },
+    async list(prefix) {
+      const snap = await db.collection(COLLECTION).get();
+      const keys = [];
+      snap.forEach((doc) => {
+        if (!prefix || doc.id.indexOf(prefix) === 0) keys.push(doc.id);
+      });
+      return { keys };
+    },
+  };
 </script>
 <script>
 (function () {
