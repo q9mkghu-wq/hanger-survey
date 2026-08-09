@@ -300,6 +300,7 @@
     object-fit: cover;
     flex-shrink: 0;
     background: #EEF3F7;
+    cursor: zoom-in;
   }
   #curtain-survey-app .csa-record-thumb-empty {
     border: 1.5px dashed #DDE5EC;
@@ -353,7 +354,7 @@
     background: #FBFCFD;
     flex-shrink: 0;
   }
-  #curtain-survey-app .csa-photo-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  #curtain-survey-app .csa-photo-tile img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: zoom-in; }
   #curtain-survey-app .csa-photo-del {
     position: absolute;
     top: 3px; right: 3px;
@@ -379,6 +380,39 @@
     color: var(--ink-soft);
     cursor: pointer;
     flex-shrink: 0;
+  }
+
+  #curtain-survey-app .csa-lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,37,64,0.9);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+    cursor: zoom-out;
+  }
+  #curtain-survey-app .csa-lightbox.open { display: flex; }
+  #curtain-survey-app .csa-lightbox img {
+    max-width: 92vw;
+    max-height: 88vh;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    cursor: default;
+  }
+  #curtain-survey-app .csa-lightbox-close {
+    position: fixed;
+    top: 16px; right: 20px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
   }
   #curtain-survey-app .csa-tap3d-hint {
     font-size: 11.5px;
@@ -680,6 +714,11 @@
       <div id="csa-list"></div>
     </div>
   </div>
+
+  <div class="csa-lightbox" id="csa-lightbox">
+    <div class="csa-lightbox-close" id="csa-lightbox-close">✕</div>
+    <img id="csa-lightbox-img" alt="확대 사진">
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -740,6 +779,9 @@
     ceiling: $('#csa-ceiling'),
     photoInput: $('#csa-photo-input'),
     photoGrid: $('#csa-photo-grid'),
+    lightbox: $('#csa-lightbox'),
+    lightboxImg: $('#csa-lightbox-img'),
+    lightboxClose: $('#csa-lightbox-close'),
     hasbox: $('#csa-hasbox'),
     boxSub: $('#csa-box-sub'),
     boxceiling: $('#csa-boxceiling'),
@@ -804,6 +846,16 @@
       add.addEventListener('click', () => el.photoInput.click());
       el.photoGrid.appendChild(add);
     }
+  }
+
+  function openLightbox(src) {
+    el.lightboxImg.src = src;
+    el.lightbox.classList.add('open');
+  }
+
+  function closeLightbox() {
+    el.lightbox.classList.remove('open');
+    el.lightboxImg.src = '';
   }
 
   function resizeImageFile(file, maxDim, quality) {
@@ -1528,6 +1580,7 @@
         `;
         row.addEventListener('click', (e) => {
           if (e.target.closest('.csa-record-del')) return;
+          if (e.target.closest('.csa-record-thumb-wrap')) return;
           currentId = item.id;
           fillState(item);
           el.status.textContent = `"${item.name || '이름 없음'}" 불러옴 — 수정 후 저장하면 갱신됩니다.`;
@@ -1537,6 +1590,13 @@
           ev.stopPropagation();
           await deleteRoom(item.id);
         });
+        const thumbWrap = row.querySelector('.csa-record-thumb-wrap');
+        if (thumbWrap) {
+          thumbWrap.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            openLightbox(firstPhoto);
+          });
+        }
         el.list.appendChild(row);
       });
     } catch (err) {
@@ -1619,11 +1679,18 @@
   });
   el.photoGrid.addEventListener('click', (e) => {
     const del = e.target.closest('.csa-photo-del');
-    if (!del) return;
-    const i = parseInt(del.dataset.i, 10);
-    currentPhotos.splice(i, 1);
-    updatePhotoGrid();
+    if (del) {
+      const i = parseInt(del.dataset.i, 10);
+      currentPhotos.splice(i, 1);
+      updatePhotoGrid();
+      return;
+    }
+    if (e.target.tagName === 'IMG') openLightbox(e.target.src);
   });
+  el.lightbox.addEventListener('click', closeLightbox);
+  el.lightboxClose.addEventListener('click', (e) => { e.stopPropagation(); closeLightbox(); });
+  el.lightboxImg.addEventListener('click', (e) => e.stopPropagation());
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
 
   // init
   syncSubFields();
