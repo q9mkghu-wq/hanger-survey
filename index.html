@@ -1819,21 +1819,22 @@
 
       const boxProtrudeLabel = '박스폭 ' + (s.boxWidth != null ? s.boxWidth.toFixed(0) : '~' + boxProtrudeEffMm);
       addDim3D(group, labelDefs,
-        new THREE.Vector3(boxLeftX + boxSpanW / 2, H, 0), new THREE.Vector3(boxLeftX + boxSpanW / 2, H, boxOutward),
-        new THREE.Vector3(boxLeftX + boxSpanW / 2, H - 0.22, 0), new THREE.Vector3(boxLeftX + boxSpanW / 2, H - 0.22, boxOutward),
+        new THREE.Vector3(boxLeftX + boxSpanW / 2, boxCeilingM, 0), new THREE.Vector3(boxLeftX + boxSpanW / 2, boxCeilingM, boxOutward),
+        new THREE.Vector3(boxLeftX + boxSpanW / 2, boxCeilingM + 0.15, 0), new THREE.Vector3(boxLeftX + boxSpanW / 2, boxCeilingM + 0.15, boxOutward),
         boxProtrudeLabel, 0xE07B1E, el.boxwidth, boxProtrudeEffMm);
 
       const boxSpanLabel = '박스길이 ' + (s.boxSpan != null ? s.boxSpan.toFixed(0) : '~' + boxSpanEffMm);
       addDim3D(group, labelDefs,
-        new THREE.Vector3(boxLeftX, boxCeilingM, 0), new THREE.Vector3(boxRightX, boxCeilingM, 0),
-        new THREE.Vector3(boxLeftX, boxCeilingM + 0.4, 0), new THREE.Vector3(boxRightX, boxCeilingM + 0.4, 0),
+        new THREE.Vector3(boxLeftX, boxCeilingM, boxOutward), new THREE.Vector3(boxRightX, boxCeilingM, boxOutward),
+        new THREE.Vector3(boxLeftX, boxCeilingM + 0.28, boxOutward), new THREE.Vector3(boxRightX, boxCeilingM + 0.28, boxOutward),
         boxSpanLabel, 0xE07B1E, el.boxspan, boxSpanEffMm);
 
-      // position along the wall: distance from the left wall to the box's near (left) edge
+      // position along the wall: distance from the left wall to the box's near (left) edge,
+      // kept up near the box itself (not at floor level) so it doesn't tangle with window/floor dims
       const boxOffsetLabel = '박스위치 ' + (s.boxOffsetX != null ? s.boxOffsetX.toFixed(0) : '~' + boxOffsetXEffMm);
       addDim3D(group, labelDefs,
-        new THREE.Vector3(0, 0.05, 0.03), new THREE.Vector3(boxLeftX, 0.05, 0.03),
-        new THREE.Vector3(0, 0.05, 0.2), new THREE.Vector3(boxLeftX, 0.05, 0.2),
+        new THREE.Vector3(0, H, 0), new THREE.Vector3(boxLeftX, H, 0),
+        new THREE.Vector3(0, H + 0.16, 0), new THREE.Vector3(boxLeftX, H + 0.16, 0),
         boxOffsetLabel, 0xE07B1E, el.boxoffsetx, boxOffsetXEffMm);
     }
 
