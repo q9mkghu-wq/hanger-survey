@@ -294,6 +294,25 @@
     border-radius: 6px;
   }
   #curtain-survey-app .csa-record-del:hover { background: #FCEEE8; color: var(--red); }
+  #curtain-survey-app .csa-record-export {
+    background: none; border: none; color: var(--ink-soft);
+    font-size: 15px; cursor: pointer; padding: 6px 8px; line-height: 1;
+    border-radius: 6px;
+  }
+  #curtain-survey-app .csa-record-export:hover { background: #EAF2F7; color: var(--teal-dark); }
+  #curtain-survey-app .csa-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  #curtain-survey-app .csa-export-all {
+    font-size: 12.5px;
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
   #curtain-survey-app .csa-record-thumb {
     width: 44px; height: 44px;
     border-radius: 6px;
@@ -710,7 +729,10 @@
 
     <!-- SAVED LIST -->
     <div class="csa-list-panel">
-      <div class="csa-panel-title" style="margin-bottom:10px;"><span class="num">✓</span>저장된 방 (<span id="csa-count">0</span>)</div>
+      <div class="csa-list-header">
+        <div class="csa-panel-title" style="margin-bottom:0;"><span class="num">✓</span>저장된 방 (<span id="csa-count">0</span>)</div>
+        <button class="csa-btn csa-btn-ghost csa-export-all" id="csa-export-all" style="display:none;">전체 파일로 내보내기</button>
+      </div>
       <div id="csa-list"></div>
     </div>
   </div>
@@ -819,6 +841,7 @@
     poleNote: $('#csa-pole-note'),
     list: $('#csa-list'),
     count: $('#csa-count'),
+    exportAll: $('#csa-export-all'),
   };
 
   let currentId = null;
@@ -1536,6 +1559,8 @@
   }
 
   // ---------- Storage ----------
+  let cachedItems = [];
+
   async function loadList() {
     el.list.innerHTML = '<div class="csa-list-empty">불러오는 중…</div>';
     try {
@@ -1544,6 +1569,8 @@
       if (!ids.length) {
         el.list.innerHTML = '<div class="csa-list-empty">저장된 방이 없습니다. 치수를 입력하고 "이 방 저장"을 눌러주세요.</div>';
         el.count.textContent = '0';
+        cachedItems = [];
+        el.exportAll.style.display = 'none';
         return;
       }
       const items = [];
@@ -1554,7 +1581,9 @@
         } catch (e) { /* skip missing */ }
       }
       items.sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
+      cachedItems = items;
       el.count.textContent = String(items.length);
+      el.exportAll.style.display = items.length ? 'inline-flex' : 'none';
       if (!items.length) {
         el.list.innerHTML = '<div class="csa-list-empty">저장된 방이 없습니다.</div>';
         return;
@@ -1576,10 +1605,12 @@
             <div class="csa-record-name">${escapeHtml(item.name || '이름 없음')}</div>
             <div class="csa-record-meta">가로 ${item.width ?? '-'}mm · 천장고 ${item.ceiling ?? '-'}mm${boxTxt}</div>
           </div>
+          <button class="csa-record-export" data-id="${item.id}" title="파일로 내보내기">⬇</button>
           <button class="csa-record-del" data-id="${item.id}" title="삭제">✕</button>
         `;
         row.addEventListener('click', (e) => {
           if (e.target.closest('.csa-record-del')) return;
+          if (e.target.closest('.csa-record-export')) return;
           if (e.target.closest('.csa-record-thumb-wrap')) return;
           currentId = item.id;
           fillState(item);
@@ -1589,6 +1620,10 @@
         row.querySelector('.csa-record-del').addEventListener('click', async (ev) => {
           ev.stopPropagation();
           await deleteRoom(item.id);
+        });
+        row.querySelector('.csa-record-export').addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          exportRooms([item]);
         });
         const thumbWrap = row.querySelector('.csa-record-thumb-wrap');
         if (thumbWrap) {
@@ -1608,6 +1643,114 @@
     const d = document.createElement('div');
     d.textContent = str;
     return d.innerHTML;
+  }
+
+  // ---------- Export to standalone HTML report (photos embedded, viewable offline forever) ----------
+  function fmtRow(label, value) {
+    if (value === null || value === undefined || value === '') return '';
+    return `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(String(value))}</td></tr>`;
+  }
+
+  function buildRoomSectionHtml(item) {
+    const savedDate = item.savedAt ? new Date(item.savedAt).toLocaleString('ko-KR') : '-';
+    const photos = Array.isArray(item.photos) ? item.photos : (item.photo ? [item.photo] : []);
+    const photosHtml = photos.length
+      ? `<div class="photos">${photos.map((p) => `<img src="${p}" alt="현장 사진">`).join('')}</div>`
+      : '<p class="muted">첨부된 사진 없음</p>';
+
+    const boxRows = item.hasBox
+      ? fmtRow('커튼박스 구간 천장고', item.boxCeiling != null ? item.boxCeiling + 'mm' : '(미입력)')
+        + fmtRow('커튼박스 폭(벽에서 거리)', item.boxWidth != null ? item.boxWidth + 'mm' : '(미입력)')
+        + fmtRow('커튼박스 길이', item.boxSpan != null ? item.boxSpan + 'mm' : '(미입력, 양쪽 벽까지)')
+      : '';
+
+    const wallRows = fmtRow('벽 표시', [
+      item.wallBack !== false ? '창문벽' : null,
+      item.wallFront !== false ? '맞은편벽' : null,
+      item.wallLeft !== false ? '좌측벽' : null,
+      item.wallRight !== false ? '우측벽' : null,
+    ].filter(Boolean).join(', ') || '전체 숨김');
+
+    const winRows = item.winEnabled !== false
+      ? fmtRow('창문 폭', item.winWidth != null ? item.winWidth + 'mm' : '(추정)')
+        + fmtRow('창문 높이', item.winHeight != null ? item.winHeight + 'mm' : '(추정)')
+        + fmtRow('창문 하단 높이', item.winSill != null ? item.winSill + 'mm' : '(추정)')
+        + fmtRow('좌측벽에서 창문까지', item.winOffsetX != null ? item.winOffsetX + 'mm' : '(추정)')
+        + (item.winProt ? fmtRow('창문 돌출 깊이', (item.winDepth ?? 50) + 'mm') : '')
+        + (item.handleProt ? fmtRow('손잡이 돌출 깊이', (item.handleDepth ?? 50) + 'mm') : '')
+        + (item.handleProt ? fmtRow('손잡이 높이', item.handleHeight != null ? item.handleHeight + 'mm' : '(추정)') : '')
+      : fmtRow('창문', '없음');
+
+    const doorRows = item.doorEnabled
+      ? fmtRow('문 위치', { left: '좌측벽', right: '우측벽', front: '맞은편벽' }[item.doorWall] || item.doorWall)
+        + fmtRow('창문벽 모서리에서 문까지', item.doorOffset != null ? item.doorOffset + 'mm' : '(추정)')
+      : '';
+
+    return `
+      <section class="room">
+        <h2>${escapeHtml(item.name || '이름 없음')}</h2>
+        <div class="muted">저장 시각: ${escapeHtml(savedDate)}</div>
+        <table>
+          ${fmtRow('가로', item.width != null ? item.width + 'mm' : '-')}
+          ${fmtRow('안길이', item.depth != null ? item.depth + 'mm' : '(추정)')}
+          ${fmtRow('천장고', item.ceiling != null ? item.ceiling + 'mm' : '-')}
+          ${boxRows}
+          ${wallRows}
+          ${winRows}
+          ${doorRows}
+          ${fmtRow('행거장 단 깊이', item.bracket != null ? item.bracket + 'mm' : null)}
+          ${fmtRow('기둥 필요 최소 천장고', item.minClear != null ? item.minClear + 'mm' : null)}
+          ${fmtRow('메모', item.memo || null)}
+        </table>
+        ${photosHtml}
+      </section>
+    `;
+  }
+
+  function buildReportDocument(title, sectionsHtml) {
+    return `<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8">
+<title>${escapeHtml(title)}</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background:#F4F7FA; color:#14213D; margin:0; padding:24px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .muted { color:#5C7089; font-size:12.5px; margin-bottom:14px; }
+  .room { background:#fff; border:1px solid #E3E9EF; border-radius:10px; padding:20px; margin-bottom:20px; max-width:720px; }
+  .room h2 { margin:0 0 4px; font-size:17px; }
+  table { border-collapse:collapse; width:100%; margin:14px 0; font-size:13.5px; }
+  th, td { text-align:left; padding:5px 10px 5px 0; border-bottom:1px solid #EEF2F6; vertical-align:top; }
+  th { color:#5C7089; font-weight:600; width:170px; white-space:nowrap; }
+  .photos { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .photos img { width:160px; height:160px; object-fit:cover; border-radius:8px; border:1px solid #E3E9EF; }
+  @media print { body{background:#fff;} .room{box-shadow:none; border:none; page-break-inside:avoid;} }
+</style></head>
+<body>
+  <h1>시스템 행거장 설치 사전 실측 — ${escapeHtml(title)}</h1>
+  <div class="muted">생성 시각: ${escapeHtml(new Date().toLocaleString('ko-KR'))} · 인쇄 메뉴에서 "PDF로 저장"도 가능합니다.</div>
+  ${sectionsHtml}
+</body></html>`;
+  }
+
+  function downloadTextFile(filename, content, mime) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+
+  function exportRooms(items) {
+    if (!items.length) return;
+    const title = items.length === 1 ? (items[0].name || '이름 없음') : `방 ${items.length}개`;
+    const html = buildReportDocument(title, items.map(buildRoomSectionHtml).join(''));
+    const safeName = (items.length === 1 ? (items[0].name || 'room') : 'rooms_all')
+      .replace(/[^\w가-힣ㄱ-ㅎㅏ-ㅣ\-]+/g, '_');
+    downloadTextFile(`${safeName}_실측기록.html`, html, 'text/html');
+    el.status.textContent = '파일로 저장했습니다. 다운로드 폴더를 확인하세요.';
   }
 
   async function deleteRoom(id) {
@@ -1655,6 +1798,7 @@
   el.doorwall.addEventListener('change', render);
   el.save.addEventListener('click', saveRoom);
   el.newBtn.addEventListener('click', clearForm);
+  el.exportAll.addEventListener('click', () => exportRooms(cachedItems));
 
   el.photoInput.addEventListener('change', async () => {
     const files = Array.from(el.photoInput.files || []);
