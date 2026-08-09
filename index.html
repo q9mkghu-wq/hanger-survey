@@ -294,6 +294,16 @@
     border-radius: 6px;
   }
   #curtain-survey-app .csa-record-del:hover { background: #FCEEE8; color: var(--red); }
+  #curtain-survey-app .csa-record-thumb {
+    width: 44px; height: 44px;
+    border-radius: 6px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #EEF3F7;
+  }
+  #curtain-survey-app .csa-record-thumb-empty {
+    border: 1.5px dashed #DDE5EC;
+  }
 
   #curtain-survey-app .csa-status {
     font-size: 11px;
@@ -315,6 +325,38 @@
   #curtain-survey-app .csa-field select.csa-select:focus { outline: none; border-color: var(--teal); background: #fff; }
 
   #curtain-survey-app .csa-hidden-io { display: none; }
+
+  #curtain-survey-app .csa-photo-row {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+  }
+  #curtain-survey-app .csa-photo-preview {
+    width: 88px;
+    height: 88px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    border: 1.5px dashed #DDE5EC;
+    background: #FBFCFD;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  #curtain-survey-app .csa-photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+  #curtain-survey-app .csa-photo-preview span { font-size: 11px; color: var(--ink-soft); text-align: center; padding: 0 6px; }
+  #curtain-survey-app .csa-photo-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: center;
+    flex: 1;
+  }
+  #curtain-survey-app .csa-photo-btn {
+    text-align: center;
+    display: block;
+    cursor: pointer;
+  }
   #curtain-survey-app .csa-tap3d-hint {
     font-size: 11.5px;
     color: var(--ink-soft);
@@ -456,7 +498,23 @@
       </div>
 
       <div class="csa-panel">
-        <div class="csa-panel-title"><span class="num">2</span>커튼박스 구간 (천장이 더 높은 부분)</div>
+        <div class="csa-panel-title"><span class="num">2</span>현장 사진</div>
+        <div class="csa-photo-row">
+          <div class="csa-photo-preview" id="csa-photo-preview">
+            <span id="csa-photo-empty">사진 없음</span>
+            <img id="csa-photo-img" style="display:none;" alt="현장 사진">
+          </div>
+          <div class="csa-photo-actions">
+            <label class="csa-btn csa-btn-ghost csa-photo-btn" for="csa-photo-input">사진 촬영/선택</label>
+            <input type="file" id="csa-photo-input" accept="image/*" capture="environment" style="display:none;">
+            <button class="csa-btn csa-btn-ghost" id="csa-photo-remove" type="button">삭제</button>
+          </div>
+        </div>
+        <div class="csa-tap3d-hint">저장하면 측정값과 함께 사진도 같이 보관됩니다 (자동으로 용량을 줄여서 저장).</div>
+      </div>
+
+      <div class="csa-panel">
+        <div class="csa-panel-title"><span class="num">3</span>커튼박스 구간 (천장이 더 높은 부분)</div>
         <div class="csa-toggle-row">
           <span class="csa-toggle-label">커튼박스 구간 있음</span>
           <label class="csa-switch">
@@ -471,7 +529,7 @@
       </div>
 
       <div class="csa-panel">
-        <div class="csa-panel-title"><span class="num">3</span>벽</div>
+        <div class="csa-panel-title"><span class="num">4</span>벽</div>
         <div class="csa-toggle-row">
           <span class="csa-toggle-label">창문벽 (뒷벽)</span>
           <label class="csa-switch">
@@ -504,7 +562,7 @@
       </div>
 
       <div class="csa-panel">
-        <div class="csa-panel-title"><span class="num">4</span>창문</div>
+        <div class="csa-panel-title"><span class="num">5</span>창문</div>
         <div class="csa-toggle-row">
           <span class="csa-toggle-label">창문 있음</span>
           <label class="csa-switch">
@@ -539,14 +597,14 @@
             </label>
           </div>
           <div class="csa-sub-field" id="csa-handle-sub">
-            <div class="csa-hidden-io"><input type="number" id="csa-handledepth"></div>
-            <div class="csa-tap3d-hint">추가 돌출 깊이는 3D 화면에서 탭해서 입력하세요.</div>
+            <div class="csa-hidden-io"><input type="number" id="csa-handledepth"><input type="number" id="csa-handleheight"></div>
+            <div class="csa-tap3d-hint">추가 돌출 깊이·바닥에서 손잡이까지 높이는 3D 화면에서 탭해서 입력하세요.</div>
           </div>
         </div>
       </div>
 
       <div class="csa-panel">
-        <div class="csa-panel-title"><span class="num">5</span>문(출입구) 위치</div>
+        <div class="csa-panel-title"><span class="num">6</span>문(출입구) 위치</div>
         <div class="csa-toggle-row">
           <span class="csa-toggle-label">문 표시</span>
           <label class="csa-switch">
@@ -569,7 +627,7 @@
       </div>
 
       <div class="csa-panel">
-        <div class="csa-panel-title"><span class="num">6</span>제품 스펙 (선택)</div>
+        <div class="csa-panel-title"><span class="num">7</span>제품 스펙 (선택)</div>
         <label class="csa-field">
           <div class="csa-field-label">설치할 행거장 단 깊이 (가구 폭) <span class="csa-unit">mm</span></div>
           <input type="number" inputmode="decimal" id="csa-bracket" placeholder="제품 사양서 참고">
@@ -581,7 +639,7 @@
       </div>
 
       <div class="csa-panel">
-        <div class="csa-panel-title"><span class="num">7</span>메모</div>
+        <div class="csa-panel-title"><span class="num">8</span>메모</div>
         <textarea class="csa-memo" id="csa-memo" placeholder="현장 특이사항, 콘센트 위치 등"></textarea>
       </div>
 
@@ -616,11 +674,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
-  // ======================================================================
-  // 1) Firebase 콘솔(https://console.firebase.google.com)에서
-  //    프로젝트 설정 → 일반 → "내 앱" → 웹 앱(</>) 추가 후 나오는
-  //    firebaseConfig 값을 그대로 아래에 붙여넣으세요.
-  // ======================================================================
   const firebaseConfig = {
     apiKey: "AIzaSyB09DJJw1Q2Vm0xW5IvnSCaIQEja5PHwYk",
     authDomain: "hanger-survey.firebaseapp.com",
@@ -671,6 +724,10 @@
     width: $('#csa-width'),
     depth: $('#csa-depth'),
     ceiling: $('#csa-ceiling'),
+    photoInput: $('#csa-photo-input'),
+    photoImg: $('#csa-photo-img'),
+    photoEmpty: $('#csa-photo-empty'),
+    photoRemove: $('#csa-photo-remove'),
     hasbox: $('#csa-hasbox'),
     boxSub: $('#csa-box-sub'),
     boxceiling: $('#csa-boxceiling'),
@@ -692,6 +749,7 @@
     handleprot: $('#csa-handleprot'),
     handleSub: $('#csa-handle-sub'),
     handledepth: $('#csa-handledepth'),
+    handleheight: $('#csa-handleheight'),
     door: $('#csa-door'),
     doorSub: $('#csa-door-sub'),
     doorwall: $('#csa-doorwall'),
@@ -710,10 +768,45 @@
   };
 
   let currentId = null;
+  let currentPhoto = null; // data URL string, or null
 
   function num(v) {
     const n = parseFloat(v);
     return isNaN(n) ? null : n;
+  }
+
+  function updatePhotoPreview() {
+    if (currentPhoto) {
+      el.photoImg.src = currentPhoto;
+      el.photoImg.style.display = 'block';
+      el.photoEmpty.style.display = 'none';
+    } else {
+      el.photoImg.style.display = 'none';
+      el.photoImg.src = '';
+      el.photoEmpty.style.display = 'block';
+    }
+  }
+
+  function resizeImageFile(file, maxDim, quality) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(reader.error);
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('이미지를 읽을 수 없습니다.'));
+        img.onload = () => {
+          let w = img.width, h = img.height;
+          if (w > h && w > maxDim) { h = Math.round(h * maxDim / w); w = maxDim; }
+          else if (h > maxDim) { w = Math.round(w * maxDim / h); h = maxDim; }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
   }
 
   function readState() {
@@ -722,6 +815,7 @@
       width: num(el.width.value) ?? 3000,
       depth: num(el.depth.value),
       ceiling: num(el.ceiling.value) ?? 2400,
+      photo: currentPhoto,
       hasBox: el.hasbox.checked,
       boxCeiling: num(el.boxceiling.value),
       boxWidth: num(el.boxwidth.value),
@@ -739,6 +833,7 @@
       winOffsetX: num(el.winoffsetx.value),
       handleProt: el.handleprot.checked,
       handleDepth: num(el.handledepth.value),
+      handleHeight: num(el.handleheight.value),
       doorEnabled: el.door.checked,
       doorWall: el.doorwall.value,
       doorOffset: num(el.dooroffset.value),
@@ -753,6 +848,8 @@
     el.width.value = s.width ?? 3000;
     el.depth.value = s.depth ?? '';
     el.ceiling.value = s.ceiling ?? 2400;
+    currentPhoto = s.photo || null;
+    updatePhotoPreview();
     el.hasbox.checked = !!s.hasBox;
     el.boxceiling.value = s.boxCeiling ?? '';
     el.boxwidth.value = s.boxWidth ?? '';
@@ -770,6 +867,7 @@
     el.winoffsetx.value = s.winOffsetX ?? '';
     el.handleprot.checked = !!s.handleProt;
     el.handledepth.value = s.handleDepth ?? '';
+    el.handleheight.value = s.handleHeight ?? '';
     el.door.checked = !!s.doorEnabled;
     el.doorwall.value = s.doorWall || 'left';
     el.dooroffset.value = s.doorOffset ?? '';
@@ -1262,20 +1360,31 @@
           '창돌출 ' + winDepthEff.toFixed(0), 0x2E8FA6, el.windepth, winDepthEff);
       }
 
-      // handle (cumulative protrusion beyond window)
+      // handle (cumulative protrusion beyond window, height independently adjustable)
       if (s.handleProt) {
         const handleDepthEff = s.handleDepth != null ? s.handleDepth : 50;
         const handleDepthM = handleDepthEff / M;
+        const handleHeightEffMm = s.handleHeight != null ? s.handleHeight : Math.round(winCenterY * M);
+        const handleCenterY = Math.max(handleHeightEffMm / M, 0.05);
         const handleW = 0.03, handleH = 0.18;
-        const handle = box(handleW, handleH, Math.max(handleDepthM, 0.02), 0x8A94A0);
-        handle.position.set(winOffsetXM + winW - 0.05, winCenterY, winProtM + handleDepthM / 2);
-        group.add(handle);
-        const hy = winCenterY - 0.28;
         const hx = winOffsetXM + winW - 0.05;
+        const handle = box(handleW, handleH, Math.max(handleDepthM, 0.02), 0x8A94A0);
+        handle.position.set(hx, handleCenterY, winProtM + handleDepthM / 2);
+        group.add(handle);
+
+        // protrusion depth (from window face outward)
+        const hy = handleCenterY - 0.28;
         addDim3D(group, labelDefs,
           new THREE.Vector3(hx, hy, winProtM), new THREE.Vector3(hx, hy, winProtM + handleDepthM),
           new THREE.Vector3(hx, hy, winProtM), new THREE.Vector3(hx, hy, winProtM + handleDepthM),
           '손잡이 +' + handleDepthEff.toFixed(0), 0x5C6670, el.handledepth, handleDepthEff);
+
+        // height from floor to handle center
+        const handleHeightLabel = '손잡이높이 ' + (s.handleHeight != null ? s.handleHeight.toFixed(0) : '~' + handleHeightEffMm);
+        addDim3D(group, labelDefs,
+          new THREE.Vector3(hx, 0, winProtM), new THREE.Vector3(hx, handleCenterY, winProtM),
+          new THREE.Vector3(hx + 0.16, 0, winProtM), new THREE.Vector3(hx + 0.16, handleCenterY, winProtM),
+          handleHeightLabel, 0x5C6670, el.handleheight, handleHeightEffMm);
       }
     }
 
@@ -1384,8 +1493,12 @@
         row.className = 'csa-record';
         const boxTxt = item.hasBox && item.boxCeiling != null && item.ceiling != null
           ? ` · 박스구간 ${(item.boxCeiling - item.ceiling >= 0 ? '+' : '') + (item.boxCeiling - item.ceiling).toFixed(0)}mm` : '';
+        const thumbHtml = item.photo
+          ? `<img class="csa-record-thumb" src="${item.photo}" alt="">`
+          : `<div class="csa-record-thumb csa-record-thumb-empty"></div>`;
         row.innerHTML = `
-          <div>
+          ${thumbHtml}
+          <div style="flex:1; min-width:0;">
             <div class="csa-record-name">${escapeHtml(item.name || '이름 없음')}</div>
             <div class="csa-record-meta">가로 ${item.width ?? '-'}mm · 천장고 ${item.ceiling ?? '-'}mm${boxTxt}</div>
           </div>
@@ -1452,7 +1565,7 @@
   }
 
   // ---------- Events ----------
-  [el.name, el.width, el.depth, el.ceiling, el.boxceiling, el.boxwidth, el.boxspan, el.windepth, el.winwidth, el.winheight, el.winsill, el.winoffsetx, el.handledepth, el.dooroffset, el.bracket, el.minclear, el.memo]
+  [el.name, el.width, el.depth, el.ceiling, el.boxceiling, el.boxwidth, el.boxspan, el.windepth, el.winwidth, el.winheight, el.winsill, el.winoffsetx, el.handledepth, el.handleheight, el.dooroffset, el.bracket, el.minclear, el.memo]
     .forEach((input) => input.addEventListener('input', render));
   [el.hasbox, el.wallback, el.wallfront, el.wallleft, el.wallright, el.winenabled, el.winprot, el.handleprot, el.door].forEach((cb) =>
     cb.addEventListener('change', () => { syncSubFields(); render(); })
@@ -1461,8 +1574,27 @@
   el.save.addEventListener('click', saveRoom);
   el.newBtn.addEventListener('click', clearForm);
 
+  el.photoInput.addEventListener('change', async () => {
+    const file = el.photoInput.files && el.photoInput.files[0];
+    el.photoInput.value = ''; // allow re-selecting the same file later
+    if (!file) return;
+    el.status.textContent = '사진 처리 중…';
+    try {
+      currentPhoto = await resizeImageFile(file, 1280, 0.7);
+      updatePhotoPreview();
+      el.status.textContent = '사진이 첨부되었습니다. 저장을 눌러야 방 기록에 반영됩니다.';
+    } catch (e) {
+      el.status.textContent = '사진을 처리하지 못했습니다.';
+    }
+  });
+  el.photoRemove.addEventListener('click', () => {
+    currentPhoto = null;
+    updatePhotoPreview();
+  });
+
   // init
   syncSubFields();
+  updatePhotoPreview();
   render();
   loadList();
 })();
