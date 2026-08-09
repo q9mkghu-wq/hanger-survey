@@ -304,6 +304,19 @@
   #curtain-survey-app .csa-record-thumb-empty {
     border: 1.5px dashed #DDE5EC;
   }
+  #curtain-survey-app .csa-record-thumb-wrap { position: relative; flex-shrink: 0; }
+  #curtain-survey-app .csa-record-thumb-count {
+    position: absolute;
+    bottom: -2px; right: -2px;
+    background: var(--navy);
+    color: #fff;
+    font-size: 9.5px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
 
   #curtain-survey-app .csa-status {
     font-size: 11px;
@@ -326,36 +339,46 @@
 
   #curtain-survey-app .csa-hidden-io { display: none; }
 
-  #curtain-survey-app .csa-photo-row {
+  #curtain-survey-app .csa-photo-grid {
     display: flex;
-    gap: 12px;
-    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 8px;
   }
-  #curtain-survey-app .csa-photo-preview {
-    width: 88px;
-    height: 88px;
+  #curtain-survey-app .csa-photo-tile {
+    width: 68px;
+    height: 68px;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    background: #FBFCFD;
     flex-shrink: 0;
+  }
+  #curtain-survey-app .csa-photo-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  #curtain-survey-app .csa-photo-del {
+    position: absolute;
+    top: 3px; right: 3px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: rgba(15,37,64,0.68);
+    color: #fff;
+    font-size: 11px;
+    line-height: 18px;
+    text-align: center;
+    cursor: pointer;
+  }
+  #curtain-survey-app .csa-photo-add {
+    width: 68px;
+    height: 68px;
     border-radius: 8px;
     border: 1.5px dashed #DDE5EC;
     background: #FBFCFD;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
-  }
-  #curtain-survey-app .csa-photo-preview img { width: 100%; height: 100%; object-fit: cover; }
-  #curtain-survey-app .csa-photo-preview span { font-size: 11px; color: var(--ink-soft); text-align: center; padding: 0 6px; }
-  #curtain-survey-app .csa-photo-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    justify-content: center;
-    flex: 1;
-  }
-  #curtain-survey-app .csa-photo-btn {
-    text-align: center;
-    display: block;
+    font-size: 24px;
+    color: var(--ink-soft);
     cursor: pointer;
+    flex-shrink: 0;
   }
   #curtain-survey-app .csa-tap3d-hint {
     font-size: 11.5px;
@@ -498,19 +521,10 @@
       </div>
 
       <div class="csa-panel">
-        <div class="csa-panel-title"><span class="num">2</span>현장 사진</div>
-        <div class="csa-photo-row">
-          <div class="csa-photo-preview" id="csa-photo-preview">
-            <span id="csa-photo-empty">사진 없음</span>
-            <img id="csa-photo-img" style="display:none;" alt="현장 사진">
-          </div>
-          <div class="csa-photo-actions">
-            <label class="csa-btn csa-btn-ghost csa-photo-btn" for="csa-photo-input">사진 촬영/선택</label>
-            <input type="file" id="csa-photo-input" accept="image/*" capture="environment" style="display:none;">
-            <button class="csa-btn csa-btn-ghost" id="csa-photo-remove" type="button">삭제</button>
-          </div>
-        </div>
-        <div class="csa-tap3d-hint">저장하면 측정값과 함께 사진도 같이 보관됩니다 (자동으로 용량을 줄여서 저장).</div>
+        <div class="csa-panel-title"><span class="num">2</span>현장 사진 (최대 5장)</div>
+        <div class="csa-photo-grid" id="csa-photo-grid"></div>
+        <input type="file" id="csa-photo-input" accept="image/*" capture="environment" multiple style="display:none;">
+        <div class="csa-tap3d-hint">저장하면 측정값과 함께 사진도 같이 보관됩니다 (자동으로 용량을 줄여서 저장, 최대 5장).</div>
       </div>
 
       <div class="csa-panel">
@@ -725,9 +739,7 @@
     depth: $('#csa-depth'),
     ceiling: $('#csa-ceiling'),
     photoInput: $('#csa-photo-input'),
-    photoImg: $('#csa-photo-img'),
-    photoEmpty: $('#csa-photo-empty'),
-    photoRemove: $('#csa-photo-remove'),
+    photoGrid: $('#csa-photo-grid'),
     hasbox: $('#csa-hasbox'),
     boxSub: $('#csa-box-sub'),
     boxceiling: $('#csa-boxceiling'),
@@ -768,22 +780,29 @@
   };
 
   let currentId = null;
-  let currentPhoto = null; // data URL string, or null
+  let currentPhotos = []; // array of data URL strings, max 5
+  const MAX_PHOTOS = 5;
 
   function num(v) {
     const n = parseFloat(v);
     return isNaN(n) ? null : n;
   }
 
-  function updatePhotoPreview() {
-    if (currentPhoto) {
-      el.photoImg.src = currentPhoto;
-      el.photoImg.style.display = 'block';
-      el.photoEmpty.style.display = 'none';
-    } else {
-      el.photoImg.style.display = 'none';
-      el.photoImg.src = '';
-      el.photoEmpty.style.display = 'block';
+  function updatePhotoGrid() {
+    el.photoGrid.innerHTML = '';
+    currentPhotos.forEach((src, i) => {
+      const tile = document.createElement('div');
+      tile.className = 'csa-photo-tile';
+      tile.innerHTML = `<img src="${src}" alt=""><div class="csa-photo-del" data-i="${i}">✕</div>`;
+      el.photoGrid.appendChild(tile);
+    });
+    if (currentPhotos.length < MAX_PHOTOS) {
+      const add = document.createElement('div');
+      add.className = 'csa-photo-add';
+      add.textContent = '+';
+      add.title = '사진 촬영/선택';
+      add.addEventListener('click', () => el.photoInput.click());
+      el.photoGrid.appendChild(add);
     }
   }
 
@@ -815,7 +834,7 @@
       width: num(el.width.value) ?? 3000,
       depth: num(el.depth.value),
       ceiling: num(el.ceiling.value) ?? 2400,
-      photo: currentPhoto,
+      photos: currentPhotos,
       hasBox: el.hasbox.checked,
       boxCeiling: num(el.boxceiling.value),
       boxWidth: num(el.boxwidth.value),
@@ -848,8 +867,9 @@
     el.width.value = s.width ?? 3000;
     el.depth.value = s.depth ?? '';
     el.ceiling.value = s.ceiling ?? 2400;
-    currentPhoto = s.photo || null;
-    updatePhotoPreview();
+    currentPhotos = Array.isArray(s.photos) ? s.photos.slice(0, MAX_PHOTOS)
+      : (s.photo ? [s.photo] : []); // backward-compat with older single-photo records
+    updatePhotoGrid();
     el.hasbox.checked = !!s.hasBox;
     el.boxceiling.value = s.boxCeiling ?? '';
     el.boxwidth.value = s.boxWidth ?? '';
@@ -1493,8 +1513,10 @@
         row.className = 'csa-record';
         const boxTxt = item.hasBox && item.boxCeiling != null && item.ceiling != null
           ? ` · 박스구간 ${(item.boxCeiling - item.ceiling >= 0 ? '+' : '') + (item.boxCeiling - item.ceiling).toFixed(0)}mm` : '';
-        const thumbHtml = item.photo
-          ? `<img class="csa-record-thumb" src="${item.photo}" alt="">`
+        const firstPhoto = (Array.isArray(item.photos) && item.photos[0]) || item.photo || null;
+        const photoCount = Array.isArray(item.photos) ? item.photos.length : (item.photo ? 1 : 0);
+        const thumbHtml = firstPhoto
+          ? `<div class="csa-record-thumb-wrap"><img class="csa-record-thumb" src="${firstPhoto}" alt="">${photoCount > 1 ? `<span class="csa-record-thumb-count">${photoCount}</span>` : ''}</div>`
           : `<div class="csa-record-thumb csa-record-thumb-empty"></div>`;
         row.innerHTML = `
           ${thumbHtml}
@@ -1575,26 +1597,37 @@
   el.newBtn.addEventListener('click', clearForm);
 
   el.photoInput.addEventListener('change', async () => {
-    const file = el.photoInput.files && el.photoInput.files[0];
+    const files = Array.from(el.photoInput.files || []);
     el.photoInput.value = ''; // allow re-selecting the same file later
-    if (!file) return;
+    if (!files.length) return;
+    const room = MAX_PHOTOS - currentPhotos.length;
+    const toProcess = files.slice(0, room);
+    const skipped = files.length - toProcess.length;
     el.status.textContent = '사진 처리 중…';
     try {
-      currentPhoto = await resizeImageFile(file, 1280, 0.7);
-      updatePhotoPreview();
-      el.status.textContent = '사진이 첨부되었습니다. 저장을 눌러야 방 기록에 반영됩니다.';
+      for (const file of toProcess) {
+        const dataUrl = await resizeImageFile(file, 1000, 0.62);
+        currentPhotos.push(dataUrl);
+        updatePhotoGrid();
+      }
+      el.status.textContent = skipped > 0
+        ? `사진 ${toProcess.length}장 첨부됨 (최대 ${MAX_PHOTOS}장이라 ${skipped}장은 제외). 저장을 눌러야 반영됩니다.`
+        : '사진이 첨부되었습니다. 저장을 눌러야 방 기록에 반영됩니다.';
     } catch (e) {
       el.status.textContent = '사진을 처리하지 못했습니다.';
     }
   });
-  el.photoRemove.addEventListener('click', () => {
-    currentPhoto = null;
-    updatePhotoPreview();
+  el.photoGrid.addEventListener('click', (e) => {
+    const del = e.target.closest('.csa-photo-del');
+    if (!del) return;
+    const i = parseInt(del.dataset.i, 10);
+    currentPhotos.splice(i, 1);
+    updatePhotoGrid();
   });
 
   // init
   syncSubFields();
-  updatePhotoPreview();
+  updatePhotoGrid();
   render();
   loadList();
 })();
