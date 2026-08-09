@@ -694,19 +694,7 @@
       </div>
 
       <div class="csa-panel">
-        <div class="csa-panel-title"><span class="num">7</span>제품 스펙 (선택)</div>
-        <label class="csa-field">
-          <div class="csa-field-label">설치할 행거장 단 깊이 (가구 폭) <span class="csa-unit">mm</span></div>
-          <input type="number" inputmode="decimal" id="csa-bracket" placeholder="제품 사양서 참고">
-        </label>
-        <label class="csa-field" style="margin-bottom:0;">
-          <div class="csa-field-label">기둥 설치에 필요한 최소 천고 <span class="csa-unit">mm</span></div>
-          <input type="number" inputmode="decimal" id="csa-minclear" placeholder="제품 사양서 참고">
-        </label>
-      </div>
-
-      <div class="csa-panel">
-        <div class="csa-panel-title"><span class="num">8</span>메모</div>
+        <div class="csa-panel-title"><span class="num">7</span>메모</div>
         <textarea class="csa-memo" id="csa-memo" placeholder="현장 특이사항, 콘센트 위치 등"></textarea>
       </div>
 
@@ -721,7 +709,7 @@
     <div>
       <div class="csa-diagram-card">
         <div class="csa-diagram-title">돌출 단면도 · 벽면 기준 깊이</div>
-        <div class="csa-diagram-desc">벽면을 0으로 두고, 창문·손잡이 돌출 깊이와 행거장 단 깊이를 비교합니다.</div>
+        <div class="csa-diagram-desc">벽면을 0으로 두고, 창문·손잡이 돌출 깊이를 비교합니다.</div>
         <svg id="csa-svg-depth" viewBox="0 0 400 220"></svg>
         <div id="csa-depth-note"></div>
       </div>
@@ -827,8 +815,6 @@
     doorSub: $('#csa-door-sub'),
     doorwall: $('#csa-doorwall'),
     dooroffset: $('#csa-dooroffset'),
-    bracket: $('#csa-bracket'),
-    minclear: $('#csa-minclear'),
     memo: $('#csa-memo'),
     save: $('#csa-save'),
     newBtn: $('#csa-new'),
@@ -928,8 +914,6 @@
       doorEnabled: el.door.checked,
       doorWall: el.doorwall.value,
       doorOffset: num(el.dooroffset.value),
-      bracket: num(el.bracket.value),
-      minClear: num(el.minclear.value),
       memo: el.memo.value,
     };
   }
@@ -963,8 +947,6 @@
     el.door.checked = !!s.doorEnabled;
     el.doorwall.value = s.doorWall || 'left';
     el.dooroffset.value = s.doorOffset ?? '';
-    el.bracket.value = s.bracket ?? '';
-    el.minclear.value = s.minClear ?? '';
     el.memo.value = s.memo || '';
     syncSubFields();
     render();
@@ -1029,19 +1011,7 @@
     if (!s.hasBox) { el.poleNote.innerHTML = ''; return; }
     const boxCeilingEff = s.boxCeiling != null ? s.boxCeiling : (s.ceiling + 300);
     const extraHeight = boxCeilingEff - s.ceiling;
-    const rows = [];
-    rows.push(`<div class="csa-note info">기둥 제작 길이 — 일반 구간 ${s.ceiling.toFixed(0)}mm · 커튼박스 구간 ${boxCeilingEff.toFixed(0)}mm (커튼박스 구간은 ${extraHeight >= 0 ? '+' + extraHeight.toFixed(0) : extraHeight.toFixed(0)}mm 더 긴 기둥 필요)</div>`);
-    if (s.minClear != null) {
-      const generalMargin = s.ceiling - s.minClear;
-      rows.push(generalMargin >= 0
-        ? `<div class="csa-note ok">일반 구간 ${s.ceiling.toFixed(0)}mm ≥ 필요 ${s.minClear.toFixed(0)}mm — 여유 ${generalMargin.toFixed(0)}mm</div>`
-        : `<div class="csa-note warn">일반 구간 ${s.ceiling.toFixed(0)}mm &lt; 필요 ${s.minClear.toFixed(0)}mm — ${Math.abs(generalMargin).toFixed(0)}mm 부족</div>`);
-      const boxMargin = boxCeilingEff - s.minClear;
-      rows.push(boxMargin >= 0
-        ? `<div class="csa-note ok">커튼박스 구간 ${boxCeilingEff.toFixed(0)}mm ≥ 필요 ${s.minClear.toFixed(0)}mm — 여유 ${boxMargin.toFixed(0)}mm</div>`
-        : `<div class="csa-note warn">커튼박스 구간 ${boxCeilingEff.toFixed(0)}mm &lt; 필요 ${s.minClear.toFixed(0)}mm — ${Math.abs(boxMargin).toFixed(0)}mm 부족</div>`);
-    }
-    el.poleNote.innerHTML = rows.join('');
+    el.poleNote.innerHTML = `<div class="csa-note info">기둥 제작 길이 — 일반 구간 ${s.ceiling.toFixed(0)}mm · 커튼박스 구간 ${boxCeilingEff.toFixed(0)}mm (커튼박스 구간은 ${extraHeight >= 0 ? '+' + extraHeight.toFixed(0) : extraHeight.toFixed(0)}mm 더 긴 기둥 필요)</div>`;
   }
 
   function renderDepth(s) {
@@ -1053,15 +1023,14 @@
     const winD = s.winProt ? (s.winDepth || 0) : 0;
     const handleD = s.handleProt ? (s.handleDepth || 0) : 0;
     const totalObstruction = winD + handleD;
-    const bracketD = s.bracket;
 
-    const maxVal = Math.max(totalObstruction, bracketD || 0, 20);
+    const maxVal = Math.max(totalObstruction, 20);
     const usableW = W - originX - 40;
     const scale = usableW / maxVal;
 
-    if (!s.winProt && !s.handleProt && bracketD == null) {
+    if (!s.winProt && !s.handleProt) {
       const t = svgEl('text', { x: W/2, y: H/2, 'text-anchor': 'middle', fill: '#9AAAC0', 'font-size': 13, 'font-family': 'Inter' });
-      t.textContent = '돌출부 또는 행거장 단 깊이를 입력하면 표시됩니다';
+      t.textContent = '돌출부를 켜면 표시됩니다';
       svg.appendChild(t);
       el.depthNote.innerHTML = '';
       return;
@@ -1096,31 +1065,11 @@
       y += rowH;
     });
 
-    // bracket depth marker
-    if (bracketD != null) {
-      const bx = originX + bracketD * scale;
-      svg.appendChild(svgEl('line', { x1: bx, y1: 30, x2: bx, y2: axisY, stroke: '#146366', 'stroke-width': 1.6, 'stroke-dasharray': '5 3' }));
-      const blbl = svgEl('text', { x: bx, y: 22, fill: '#146366', 'font-size': 10.5, 'font-weight': 700, 'text-anchor': 'middle', 'font-family': "'IBM Plex Mono', monospace" });
-      blbl.textContent = '행거장 단 깊이 ' + bracketD.toFixed(0) + 'mm';
-      svg.appendChild(blbl);
-    }
-
     // axis
     svg.appendChild(svgEl('line', { x1: originX, y1: axisY, x2: W - 20, y2: axisY, stroke: '#5C7089', 'stroke-width': 1 }));
     dimLine(svg, originX, axisY + 20, originX + totalObstruction * scale, axisY + 20, '총 돌출 ' + totalObstruction.toFixed(0) + 'mm', { color: '#5C7089' });
 
-    let noteHtml = '';
-    if (bracketD != null && (s.winProt || s.handleProt)) {
-      const clearance = bracketD - totalObstruction;
-      if (clearance >= 0) {
-        noteHtml = `<div class="csa-note ok">행거장 단 깊이 ${bracketD.toFixed(0)}mm ≥ 총 돌출 ${totalObstruction.toFixed(0)}mm — 여유 ${clearance.toFixed(0)}mm</div>`;
-      } else {
-        noteHtml = `<div class="csa-note warn">행거장 단 깊이 ${bracketD.toFixed(0)}mm &lt; 총 돌출 ${totalObstruction.toFixed(0)}mm — ${Math.abs(clearance).toFixed(0)}mm 부족, 간섭 우려</div>`;
-      }
-    } else if (s.winProt || s.handleProt) {
-      noteHtml = `<div class="csa-note info">총 돌출 ${totalObstruction.toFixed(0)}mm. 행거장 단 깊이를 입력하면 간섭 여부를 비교합니다.</div>`;
-    }
-    el.depthNote.innerHTML = noteHtml;
+    el.depthNote.innerHTML = '';
   }
 
   function render() {
@@ -1695,8 +1644,6 @@
           ${wallRows}
           ${winRows}
           ${doorRows}
-          ${fmtRow('행거장 단 깊이', item.bracket != null ? item.bracket + 'mm' : null)}
-          ${fmtRow('기둥 필요 최소 천고', item.minClear != null ? item.minClear + 'mm' : null)}
           ${fmtRow('메모', item.memo || null)}
         </table>
         ${photosHtml}
@@ -1787,7 +1734,7 @@
   }
 
   // ---------- Events ----------
-  [el.name, el.width, el.depth, el.ceiling, el.boxceiling, el.boxwidth, el.boxspan, el.windepth, el.winwidth, el.winheight, el.winsill, el.winoffsetx, el.handledepth, el.handleheight, el.dooroffset, el.bracket, el.minclear, el.memo]
+  [el.name, el.width, el.depth, el.ceiling, el.boxceiling, el.boxwidth, el.boxspan, el.windepth, el.winwidth, el.winheight, el.winsill, el.winoffsetx, el.handledepth, el.handleheight, el.dooroffset, el.memo]
     .forEach((input) => input.addEventListener('input', render));
   [el.hasbox, el.wallback, el.wallfront, el.wallleft, el.wallright, el.winenabled, el.winprot, el.handleprot, el.door].forEach((cb) =>
     cb.addEventListener('change', () => { syncSubFields(); render(); })
