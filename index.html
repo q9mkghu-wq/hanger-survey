@@ -490,6 +490,43 @@
     font-family: 'Inter', sans-serif;
     pointer-events: none;
   }
+  #curtain-survey-app .csa-3d-toolbar {
+    position: absolute;
+    top: 8px; right: 10px;
+    display: flex;
+    gap: 6px;
+    z-index: 5;
+  }
+  #curtain-survey-app .csa-3d-chip {
+    background: rgba(255,255,255,0.9);
+    border: 1.5px solid #DDE5EC;
+    border-radius: 999px;
+    padding: 5px 11px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 1px 3px rgba(15,37,64,0.15);
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  #curtain-survey-app .csa-3d-chip.on {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: #fff;
+  }
+  #curtain-survey-app .csa-3d-toolbar-sub {
+    position: absolute;
+    top: 42px; right: 10px;
+    display: flex;
+    gap: 5px;
+    z-index: 5;
+  }
+  #curtain-survey-app .csa-3d-chip.mini {
+    padding: 4px 9px;
+    font-size: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
   #curtain-survey-app .csa-3d-labels {
     position: absolute;
     inset: 0;
@@ -528,6 +565,13 @@
     justify-content: center;
     text-shadow: none;
     box-shadow: 0 2px 6px rgba(15,37,64,0.4);
+  }
+  #curtain-survey-app .csa-3d-label.badge.action {
+    width: 20px;
+    height: 20px;
+    background: var(--red);
+    font-size: 11px;
+    cursor: pointer;
   }
   #curtain-survey-app .csa-3d-label-input {
     position: absolute;
@@ -572,6 +616,16 @@
       <div class="csa-diagram-title">3D 미리보기</div>
       <div class="csa-diagram-desc">숫자를 탭하면 그 자리에서 값을 바로 고칠 수 있습니다. 지붕은 내부가 보이도록 생략했습니다.</div>
       <div class="csa-3d-wrap" id="csa-3d-wrap">
+        <div class="csa-3d-toolbar" id="csa-3d-toolbar">
+          <button type="button" class="csa-3d-chip" id="csa-chip-window">창문</button>
+          <button type="button" class="csa-3d-chip" id="csa-chip-box">커튼박스</button>
+          <button type="button" class="csa-3d-chip" id="csa-chip-door">문</button>
+        </div>
+        <div class="csa-3d-toolbar-sub" id="csa-3d-door-walls" style="display:none;">
+          <button type="button" class="csa-3d-chip mini" data-wall="left">D벽</button>
+          <button type="button" class="csa-3d-chip mini" data-wall="right">B벽</button>
+          <button type="button" class="csa-3d-chip mini" data-wall="front">C벽</button>
+        </div>
         <div class="csa-3d-labels" id="csa-3d-labels"></div>
         <div class="csa-3d-hint" id="csa-3d-hint">숫자 탭: 값 입력 · 드래그: 회전 · 스크롤: 확대</div>
       </div>
@@ -627,7 +681,7 @@
         <div class="csa-toggle-row">
           <span class="csa-toggle-label">커튼박스 구간 있음</span>
           <label class="csa-switch">
-            <input type="checkbox" id="csa-hasbox">
+            <input type="checkbox" id="csa-hasbox" checked>
             <span class="track"></span><span class="knob"></span>
           </label>
         </div>
@@ -717,21 +771,20 @@
         <div class="csa-toggle-row">
           <span class="csa-toggle-label">문 표시</span>
           <label class="csa-switch">
-            <input type="checkbox" id="csa-door">
+            <input type="checkbox" id="csa-door" checked>
             <span class="track"></span><span class="knob"></span>
           </label>
         </div>
         <div class="csa-sub-field" id="csa-door-sub">
-          <label class="csa-field" style="margin-top:6px; margin-bottom:0;">
-            <div class="csa-field-label">문이 있는 벽</div>
-            <select id="csa-doorwall" class="csa-select">
-              <option value="left">좌측벽</option>
-              <option value="right">우측벽</option>
-              <option value="front">맞은편벽 (창문벽 반대쪽)</option>
+          <div class="csa-hidden-io">
+            <select id="csa-doorwall">
+              <option value="left">left</option>
+              <option value="right">right</option>
+              <option value="front">front</option>
             </select>
-          </label>
-          <div class="csa-hidden-io"><input type="number" id="csa-dooroffset"></div>
-          <div class="csa-tap3d-hint" style="margin-top:6px;">창문벽 쪽 모서리부터 문까지 거리는 3D 화면에서 탭해서 입력하세요.</div>
+            <input type="number" id="csa-dooroffset">
+          </div>
+          <div class="csa-tap3d-hint" style="margin-top:6px;">문이 있는 벽은 3D 화면 우측 상단 "문" 버튼 아래 D·B·C 버튼으로 고르고, 거리는 3D 화면에서 탭해서 입력하세요.</div>
         </div>
       </div>
 
@@ -831,6 +884,10 @@
     lightbox: $('#csa-lightbox'),
     lightboxImg: $('#csa-lightbox-img'),
     lightboxClose: $('#csa-lightbox-close'),
+    chipWindow: $('#csa-chip-window'),
+    chipBox: $('#csa-chip-box'),
+    chipDoor: $('#csa-chip-door'),
+    doorWallsRow: $('#csa-3d-door-walls'),
     hasbox: $('#csa-hasbox'),
     boxSub: $('#csa-box-sub'),
     boxceiling: $('#csa-boxceiling'),
@@ -974,7 +1031,7 @@
     currentPhotos = Array.isArray(s.photos) ? s.photos.slice(0, MAX_PHOTOS)
       : (s.photo ? [s.photo] : []); // backward-compat with older single-photo records
     updatePhotoGrid();
-    el.hasbox.checked = !!s.hasBox;
+    el.hasbox.checked = s.hasBox !== false;
     el.boxceiling.value = s.boxCeiling ?? '';
     el.boxwidth.value = s.boxWidth ?? '';
     el.boxspan.value = s.boxSpan ?? '';
@@ -993,7 +1050,7 @@
     el.handleprot.checked = !!s.handleProt;
     el.handledepth.value = s.handleDepth ?? '';
     el.handleheight.value = s.handleHeight ?? '';
-    el.door.checked = !!s.doorEnabled;
+    el.door.checked = s.doorEnabled !== false;
     el.doorwall.value = s.doorWall || 'left';
     el.dooroffset.value = s.doorOffset ?? '';
     el.memo.value = s.memo || '';
@@ -1145,7 +1202,7 @@
 
     // span (horizontal extent) depends on which wall: A/C run along the room width, B/D along the depth
     const span = (wallKey === 'A' || wallKey === 'C') ? s.width
-      : (s.depth != null ? s.depth : Math.max(Math.min(s.width * 0.6, 4000), 900));
+      : (s.depth != null ? s.depth : 4000);
     const boxCeilingEff = s.hasBox ? (s.boxCeiling != null ? s.boxCeiling : s.ceiling + 300) : s.ceiling;
     const boxExtraMm = boxCeilingEff - s.ceiling;
     const boxShownOnThisWall = s.hasBox && wallKey !== 'C';
@@ -1290,6 +1347,13 @@
     renderWallElevation(el.svgWallC, 'C', s);
     renderWallElevation(el.svgWallD, 'D', s);
     render3D(s);
+    el.chipWindow.classList.toggle('on', s.winEnabled !== false);
+    el.chipBox.classList.toggle('on', !!s.hasBox);
+    el.chipDoor.classList.toggle('on', !!s.doorEnabled);
+    el.doorWallsRow.style.display = s.doorEnabled ? 'flex' : 'none';
+    el.doorWallsRow.querySelectorAll('[data-wall]').forEach((btn) => {
+      btn.classList.toggle('on', btn.dataset.wall === s.doorWall);
+    });
   }
 
   // ---------- 3D preview ----------
@@ -1411,10 +1475,20 @@
     labelsContainer3d.innerHTML = '';
     three.labels = labelDefs.map((l) => {
       const d = document.createElement('div');
-      d.className = 'csa-3d-label' + (l.editTarget ? ' editable' : '') + (l.badge ? ' badge' : '');
+      d.className = 'csa-3d-label' + (l.editTarget ? ' editable' : '') + (l.badge ? ' badge' : '') + (l.action ? ' action' : '');
       d.textContent = l.text;
       d.style.color = l.badge ? '' : ('#' + l.color.toString(16).padStart(6, '0'));
-      if (l.editTarget) {
+      if (l.action) {
+        d.style.pointerEvents = 'auto';
+        d.title = '탭하여 삭제';
+        d.addEventListener('pointerdown', (e) => e.stopPropagation());
+        d.addEventListener('click', (e) => {
+          e.stopPropagation();
+          l.action();
+          syncSubFields();
+          render();
+        });
+      } else if (l.editTarget) {
         d.style.pointerEvents = 'auto';
         d.title = '탭하여 값 수정';
         d.addEventListener('pointerdown', (e) => e.stopPropagation());
@@ -1459,8 +1533,8 @@
     input.select();
   }
 
-  function addPointLabel3D(labelDefs, point, text, colorHex, badge) {
-    labelDefs.push({ p1: point.clone(), p2: point.clone(), text, color: colorHex, editTarget: null, editValueMm: null, badge: !!badge });
+  function addPointLabel3D(labelDefs, point, text, colorHex, badge, action) {
+    labelDefs.push({ p1: point.clone(), p2: point.clone(), text, color: colorHex, editTarget: null, editValueMm: null, badge: !!badge, action: action || null });
   }
 
   function addDim3D(group, labelDefs, edgeP1, edgeP2, dimP1, dimP2, text, colorHex, editTarget, editValueMm) {
@@ -1511,7 +1585,7 @@
     const M = 1000; // mm -> m
     const W = s.width / M;
     const H = s.ceiling / M;
-    const D = s.depth ? s.depth / M : Math.max(Math.min(W * 0.6, 4.0), 0.9); // real if provided, else schematic
+    const D = s.depth ? s.depth / M : 4.0; // real if provided, else default
 
     // floor
     const floor = box(W, 0.02, D, 0xC9B08C);
@@ -1551,23 +1625,71 @@
     // person figure at the room's center — marks the vantage point the A/B/C/D wall drawings are seen from
     {
       const personX = W / 2, personZ = D / 2;
-      const legH = 0.85, bodyH = 0.55, headR = 0.13;
-      const legs = box(0.14, legH, 0.14, 0x3A5068);
-      legs.position.set(personX, legH / 2, personZ);
-      group.add(legs);
-      const body = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.16, 0.2, bodyH, 16),
-        new THREE.MeshStandardMaterial({ color: 0x2E8FA6 })
-      );
-      body.position.set(personX, legH + bodyH / 2, personZ);
-      group.add(body);
+      const pantsColor = 0x33465C, shirtColor = 0x2E8FA6, skinColor = 0xE8C39E, shoeColor = 0x22303F;
+      const legH = 0.82, hipW = 0.11, legR = 0.055;
+      const torsoH = 0.42, shoulderW = 0.34, waistW = 0.24;
+      const armR = 0.04, armH = 0.42;
+      const neckH = 0.05, headR = 0.115;
+
+      function limb(radiusTop, radiusBottom, height, color) {
+        return new THREE.Mesh(
+          new THREE.CylinderGeometry(radiusTop, radiusBottom, height, 12),
+          new THREE.MeshStandardMaterial({ color })
+        );
+      }
+
+      // legs (two, standing slightly apart) + shoes
+      [-1, 1].forEach((side) => {
+        const leg = limb(legR, legR * 0.9, legH, pantsColor);
+        leg.position.set(personX + side * hipW, legH / 2, personZ);
+        group.add(leg);
+        const shoe = new THREE.Mesh(
+          new THREE.BoxGeometry(0.09, 0.05, 0.16),
+          new THREE.MeshStandardMaterial({ color: shoeColor })
+        );
+        shoe.position.set(personX + side * hipW, 0.025, personZ + 0.03);
+        group.add(shoe);
+      });
+
+      // torso, tapered narrower at the waist, wider at the shoulders
+      const torso = limb(shoulderW / 2, waistW / 2, torsoH, shirtColor);
+      torso.position.set(personX, legH + torsoH / 2, personZ);
+      group.add(torso);
+
+      // arms hanging at the sides, angled slightly outward
+      [-1, 1].forEach((side) => {
+        const arm = limb(armR, armR * 0.85, armH, shirtColor);
+        arm.position.set(personX + side * (shoulderW / 2 + armR + 0.01), legH + torsoH - armH / 2 - 0.03, personZ);
+        arm.rotation.z = side * 0.09;
+        group.add(arm);
+        const hand = new THREE.Mesh(
+          new THREE.SphereGeometry(armR * 1.05, 10, 10),
+          new THREE.MeshStandardMaterial({ color: skinColor })
+        );
+        hand.position.set(personX + side * (shoulderW / 2 + armR + 0.01 + Math.sin(side * 0.09) * armH * 0.5), legH + torsoH - armH - 0.03, personZ);
+        group.add(hand);
+      });
+
+      // neck + head
+      const neck = limb(0.045, 0.05, neckH, skinColor);
+      neck.position.set(personX, legH + torsoH + neckH / 2, personZ);
+      group.add(neck);
       const head = new THREE.Mesh(
-        new THREE.SphereGeometry(headR, 16, 16),
-        new THREE.MeshStandardMaterial({ color: 0xE8C39E })
+        new THREE.SphereGeometry(headR, 18, 18),
+        new THREE.MeshStandardMaterial({ color: skinColor })
       );
-      head.position.set(personX, legH + bodyH + headR, personZ);
+      const headY = legH + torsoH + neckH + headR * 0.92;
+      head.position.set(personX, headY, personZ);
       group.add(head);
-      addPointLabel3D(labelDefs, new THREE.Vector3(personX, legH + bodyH + headR * 2 + 0.14, personZ), '보는 위치', 0x2E8FA6, false);
+      // small hair cap so the head doesn't read as a plain ball
+      const hair = new THREE.Mesh(
+        new THREE.SphereGeometry(headR * 1.03, 18, 18, 0, Math.PI * 2, 0, Math.PI * 0.52),
+        new THREE.MeshStandardMaterial({ color: 0x2B2320 })
+      );
+      hair.position.set(personX, headY + headR * 0.12, personZ);
+      group.add(hair);
+
+      addPointLabel3D(labelDefs, new THREE.Vector3(personX, headY + headR + 0.12, personZ), '보는 위치', 0x2E8FA6, false);
     }
 
     // core dimension lines: width, depth, ceiling height (all tap-to-edit)
@@ -1996,6 +2118,34 @@
   el.save.addEventListener('click', saveRoom);
   el.newBtn.addEventListener('click', clearForm);
   el.exportAll.addEventListener('click', () => exportRooms(cachedItems));
+
+  // 3D corner toolbar: quick on/off chips for window / curtain box / door
+  [el.chipWindow, el.chipBox, el.chipDoor].forEach((chip) => {
+    chip.addEventListener('pointerdown', (e) => e.stopPropagation());
+  });
+  el.chipWindow.addEventListener('click', (e) => {
+    e.stopPropagation();
+    el.winenabled.checked = !el.winenabled.checked;
+    syncSubFields(); render();
+  });
+  el.chipBox.addEventListener('click', (e) => {
+    e.stopPropagation();
+    el.hasbox.checked = !el.hasbox.checked;
+    syncSubFields(); render();
+  });
+  el.chipDoor.addEventListener('click', (e) => {
+    e.stopPropagation();
+    el.door.checked = !el.door.checked;
+    syncSubFields(); render();
+  });
+  el.doorWallsRow.querySelectorAll('[data-wall]').forEach((btn) => {
+    btn.addEventListener('pointerdown', (e) => e.stopPropagation());
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      el.doorwall.value = btn.dataset.wall;
+      render();
+    });
+  });
 
   el.photoInput.addEventListener('change', async () => {
     const files = Array.from(el.photoInput.files || []);
