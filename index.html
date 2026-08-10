@@ -1478,16 +1478,17 @@
       extraDimRow = true;
     }
 
-    // ceiling AC projection onto this wall's span axis, with span + position dimension lines
+    // ceiling AC projection onto this wall's span axis, with span + thickness + position dimension lines
     if (s.acEnabled) {
       const acWEff = s.acWidth != null ? s.acWidth : 900;
       const acDEff = s.acDepth != null ? s.acDepth : 300;
+      const acThickEff = s.acThick != null ? s.acThick : 220;
       const acXEff = s.acOffsetX != null ? s.acOffsetX : Math.round((s.width - acWEff) / 2);
       const acZEff = s.acOffsetZ != null ? s.acOffsetZ : 100;
       const spanVal = (wallKey === 'A' || wallKey === 'C') ? acWEff : acDEff;
       const offsetVal = (wallKey === 'A' || wallKey === 'C') ? acXEff : acZEff;
       const ar = spanRect(offsetVal, spanVal);
-      const acPxH = 13;
+      const acPxH = Math.max(acThickEff * scale, 4); // now scaled to the real ceiling-drop thickness
       svg.appendChild(svgEl('rect', {
         x: ar.x, y: ceilY, width: ar.w, height: acPxH,
         fill: '#DCE3E888', stroke: '#8492A0', 'stroke-width': 1,
@@ -1497,6 +1498,10 @@
       svg.appendChild(acLbl);
       // span (width or depth, whichever this wall shows) just above the unit
       dimLine(svg, ar.x, ceilY - 10, ar.x + ar.w, ceilY - 10, spanVal.toFixed(0) + 'mm', { color: '#6E8199' });
+      // ceiling-drop thickness, along the side of the unit
+      const acThickOnRight = ar.x + ar.w + 14 + 30 < x1;
+      const athx = acThickOnRight ? ar.x + ar.w + 14 : ar.x - 14;
+      dimLine(svg, athx, ceilY, athx, ceilY + acPxH, acThickEff.toFixed(0) + 'mm', { color: '#6E8199' });
       // position from this wall's corner, along the inner floor row (same row door/window use)
       dimLine(svg, cornerX, floorY + 16, ar.nearCornerEdge, floorY + 16, offsetVal.toFixed(0) + 'mm', { color: '#6E8199' });
       extraDimRow = true;
