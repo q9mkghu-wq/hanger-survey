@@ -358,6 +358,31 @@
   #curtain-survey-app .csa-field select.csa-select:focus { outline: none; border-color: var(--teal); background: #fff; }
 
   #curtain-survey-app .csa-hidden-io { display: none; }
+  #curtain-survey-app .csa-appliance-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    border-top: 1px solid var(--paper-line);
+  }
+  #curtain-survey-app .csa-appliance-row:first-child { border-top: none; }
+  #curtain-survey-app .csa-appliance-row input[type=text] {
+    flex: 1;
+    border: 1.5px solid #DDE5EC;
+    border-radius: 7px;
+    padding: 8px 10px;
+    font-size: 13.5px;
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+    background: #FBFCFD;
+  }
+  #curtain-survey-app .csa-appliance-row input[type=text]:focus { outline: none; border-color: var(--teal); background: #fff; }
+  #curtain-survey-app .csa-appliance-del {
+    background: none; border: none; color: var(--ink-soft);
+    font-size: 16px; cursor: pointer; padding: 6px 8px; line-height: 1;
+    border-radius: 6px; flex-shrink: 0;
+  }
+  #curtain-survey-app .csa-appliance-del:hover { background: #FCEEE8; color: var(--red); }
 
   #curtain-survey-app .csa-photo-grid {
     display: flex;
@@ -527,6 +552,15 @@
     font-size: 10px;
     font-family: 'IBM Plex Mono', monospace;
   }
+  #curtain-survey-app .csa-3d-dimfilter {
+    position: absolute;
+    top: 8px; left: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    max-width: 62%;
+    z-index: 5;
+  }
   #curtain-survey-app .csa-3d-labels {
     position: absolute;
     inset: 0;
@@ -620,11 +654,22 @@
           <button type="button" class="csa-3d-chip" id="csa-chip-window">창문</button>
           <button type="button" class="csa-3d-chip" id="csa-chip-box">커튼박스</button>
           <button type="button" class="csa-3d-chip" id="csa-chip-door">문</button>
+          <button type="button" class="csa-3d-chip" id="csa-chip-ac">에어컨</button>
+          <button type="button" class="csa-3d-chip" id="csa-chip-appliance">가전</button>
         </div>
         <div class="csa-3d-toolbar-sub" id="csa-3d-door-walls" style="display:none;">
           <button type="button" class="csa-3d-chip mini" data-wall="left">D벽</button>
           <button type="button" class="csa-3d-chip mini" data-wall="right">B벽</button>
           <button type="button" class="csa-3d-chip mini" data-wall="front">C벽</button>
+        </div>
+        <div class="csa-3d-dimfilter" id="csa-3d-dimfilter">
+          <button type="button" class="csa-3d-chip mini on" data-cat="all">전체</button>
+          <button type="button" class="csa-3d-chip mini" data-cat="core">기본</button>
+          <button type="button" class="csa-3d-chip mini" data-cat="box">박스</button>
+          <button type="button" class="csa-3d-chip mini" data-cat="window">창문</button>
+          <button type="button" class="csa-3d-chip mini" data-cat="door">문</button>
+          <button type="button" class="csa-3d-chip mini" data-cat="ac">에어컨</button>
+          <button type="button" class="csa-3d-chip mini" data-cat="appliance">가전</button>
         </div>
         <div class="csa-3d-labels" id="csa-3d-labels"></div>
         <div class="csa-3d-hint" id="csa-3d-hint">숫자 탭: 값 입력 · 드래그: 회전 · 스크롤: 확대</div>
@@ -636,6 +681,8 @@
         <span><i style="background:#8FC1D6;"></i>창문</span>
         <span><i style="background:#8A94A0;"></i>손잡이</span>
         <span><i style="background:#C94F4F;"></i>문 위치</span>
+        <span><i style="background:#DCE3E8; border:1px solid #B9C3CC;"></i>천장 에어컨</span>
+        <span><i style="background:#8A7CA8;"></i>가전·가구</span>
       </div>
       <div id="csa-pole-note"></div>
     </div>
@@ -649,6 +696,12 @@
         <div class="csa-wall-card"><svg id="csa-svg-wall-c" viewBox="0 0 320 260"></svg></div>
         <div class="csa-wall-card"><svg id="csa-svg-wall-d" viewBox="0 0 320 260"></svg></div>
       </div>
+    </div>
+
+    <div class="csa-diagram-card csa-3d-card">
+      <div class="csa-diagram-title">평면도 (위에서 본 도면)</div>
+      <div class="csa-diagram-desc">방을 위에서 내려다본 배치도입니다. 벽면 기호(A·B·C·D)는 3D·벽면 도면과 같습니다.</div>
+      <svg id="csa-svg-plan" viewBox="0 0 520 380" style="width:100%; height:auto; background:#FBFDFE; border-radius:8px;"></svg>
     </div>
 
     <!-- LEFT: FORM -->
@@ -767,7 +820,34 @@
       </div>
 
       <div class="csa-panel">
-        <div class="csa-panel-title"><span class="num">6</span>문(출입구) 위치</div>
+        <div class="csa-panel-title"><span class="num">6</span>천장 에어컨</div>
+        <div class="csa-toggle-row">
+          <span class="csa-toggle-label">천장 에어컨 표시</span>
+          <label class="csa-switch">
+            <input type="checkbox" id="csa-acenabled">
+            <span class="track"></span><span class="knob"></span>
+          </label>
+        </div>
+        <div class="csa-sub-field" id="csa-ac-sub">
+          <div class="csa-hidden-io">
+            <input type="number" id="csa-acwidth"><input type="number" id="csa-acdepth">
+            <input type="number" id="csa-acoffsetx"><input type="number" id="csa-acoffsetz">
+            <input type="number" id="csa-acthick">
+          </div>
+          <div class="csa-tap3d-hint">보통 창문벽 천장에 붙어있는 형태로 표시됩니다. 가로·세로 폭, 천장에서 아래로 돌출한 두께, 좌측벽·창문벽에서 거리는 3D 화면에서 탭해서 입력하세요.</div>
+        </div>
+      </div>
+
+      <div class="csa-panel">
+        <div class="csa-panel-title"><span class="num">7</span>가전·가구 (냉장고, 스타일러 등)</div>
+        <div class="csa-hidden-io"><input type="checkbox" id="csa-appliancevisible"></div>
+        <div id="csa-appliance-list"></div>
+        <button type="button" class="csa-btn csa-btn-ghost" id="csa-appliance-add" style="width:100%; margin-top:6px;">+ 항목 추가</button>
+        <div class="csa-tap3d-hint" style="margin-top:8px;">이름은 여기서 입력하고, 3D 화면 우측 상단 "가전" 버튼을 켜면 보입니다. 가로·세로·높이·위치는 3D 화면에서 탭해서 입력하세요.</div>
+      </div>
+
+      <div class="csa-panel">
+        <div class="csa-panel-title"><span class="num">8</span>문(출입구) 위치</div>
         <div class="csa-toggle-row">
           <span class="csa-toggle-label">문 표시</span>
           <label class="csa-switch">
@@ -791,7 +871,7 @@
       </div>
 
       <div class="csa-panel">
-        <div class="csa-panel-title"><span class="num">7</span>메모</div>
+        <div class="csa-panel-title"><span class="num">9</span>메모</div>
         <textarea class="csa-memo" id="csa-memo" placeholder="현장 특이사항, 콘센트 위치 등"></textarea>
       </div>
 
@@ -889,7 +969,12 @@
     chipWindow: $('#csa-chip-window'),
     chipBox: $('#csa-chip-box'),
     chipDoor: $('#csa-chip-door'),
+    chipAc: $('#csa-chip-ac'),
+    chipAppliance: $('#csa-chip-appliance'),
+    applianceVisible: $('#csa-appliancevisible'),
     doorWallsRow: $('#csa-3d-door-walls'),
+    dimFilterRow: $('#csa-3d-dimfilter'),
+    svgPlan: $('#csa-svg-plan'),
     hasbox: $('#csa-hasbox'),
     boxSub: $('#csa-box-sub'),
     boxceiling: $('#csa-boxceiling'),
@@ -919,6 +1004,15 @@
     dooroffset: $('#csa-dooroffset'),
     doorwidth: $('#csa-doorwidth'),
     doorheight: $('#csa-doorheight'),
+    acenabled: $('#csa-acenabled'),
+    acSub: $('#csa-ac-sub'),
+    acwidth: $('#csa-acwidth'),
+    acdepth: $('#csa-acdepth'),
+    acoffsetx: $('#csa-acoffsetx'),
+    acoffsetz: $('#csa-acoffsetz'),
+    acthick: $('#csa-acthick'),
+    applianceList: $('#csa-appliance-list'),
+    applianceAdd: $('#csa-appliance-add'),
     memo: $('#csa-memo'),
     save: $('#csa-save'),
     newBtn: $('#csa-new'),
@@ -938,6 +1032,33 @@
   let currentId = null;
   let currentPhotos = []; // array of data URL strings, max 5
   const MAX_PHOTOS = 5;
+  let currentAppliances = []; // array of {id, name, width, depth, height, offsetX, offsetZ}, max 4
+  const MAX_APPLIANCES = 4;
+  let applianceSeq = 0;
+  let activeDimFilter = 'all'; // 'all' | 'core' | 'box' | 'window' | 'door' | 'ac' | 'appliance'
+  function catOn(cat) { return activeDimFilter === 'all' || activeDimFilter === cat; }
+
+  function updateApplianceRows() {
+    el.applianceList.innerHTML = '';
+    currentAppliances.forEach((item) => {
+      const row = document.createElement('div');
+      row.className = 'csa-appliance-row';
+      row.innerHTML = `
+        <input type="text" value="${escapeHtml(item.name || '')}" placeholder="예: 냉장고, 스타일러" data-id="${item.id}">
+        <button type="button" class="csa-appliance-del" data-id="${item.id}" title="삭제">✕</button>
+      `;
+      row.querySelector('input').addEventListener('input', (e) => {
+        item.name = e.target.value;
+      });
+      row.querySelector('.csa-appliance-del').addEventListener('click', () => {
+        currentAppliances = currentAppliances.filter((a) => a.id !== item.id);
+        updateApplianceRows();
+        render();
+      });
+      el.applianceList.appendChild(row);
+    });
+    el.applianceAdd.style.display = currentAppliances.length >= MAX_APPLIANCES ? 'none' : 'block';
+  }
 
   function num(v) {
     const n = parseFloat(v);
@@ -1025,6 +1146,14 @@
       doorOffset: num(el.dooroffset.value),
       doorWidth: num(el.doorwidth.value),
       doorHeight: num(el.doorheight.value),
+      acEnabled: el.acenabled.checked,
+      acWidth: num(el.acwidth.value),
+      acDepth: num(el.acdepth.value),
+      acOffsetX: num(el.acoffsetx.value),
+      acOffsetZ: num(el.acoffsetz.value),
+      acThick: num(el.acthick.value),
+      appliances: currentAppliances,
+      applianceVisible: el.applianceVisible.checked,
       memo: el.memo.value,
     };
   }
@@ -1061,6 +1190,15 @@
     el.dooroffset.value = s.doorOffset ?? '';
     el.doorwidth.value = s.doorWidth ?? '';
     el.doorheight.value = s.doorHeight ?? '';
+    el.acenabled.checked = !!s.acEnabled;
+    el.acwidth.value = s.acWidth ?? '';
+    el.acdepth.value = s.acDepth ?? '';
+    el.acoffsetx.value = s.acOffsetX ?? '';
+    el.acoffsetz.value = s.acOffsetZ ?? '';
+    el.acthick.value = s.acThick ?? '';
+    currentAppliances = Array.isArray(s.appliances) ? s.appliances : [];
+    el.applianceVisible.checked = !!s.applianceVisible;
+    updateApplianceRows();
     el.memo.value = s.memo || '';
     syncSubFields();
     render();
@@ -1078,6 +1216,7 @@
     el.winSub.classList.toggle('open', el.winprot.checked);
     el.handleSub.classList.toggle('open', el.handleprot.checked);
     el.doorSub.classList.toggle('open', el.door.checked);
+    el.acSub.classList.toggle('open', el.acenabled.checked);
   }
 
   // ---------- SVG helpers ----------
@@ -1339,12 +1478,193 @@
       extraDimRow = true;
     }
 
+    // ceiling AC projection onto this wall's span axis, with span + position dimension lines
+    if (s.acEnabled) {
+      const acWEff = s.acWidth != null ? s.acWidth : 900;
+      const acDEff = s.acDepth != null ? s.acDepth : 300;
+      const acXEff = s.acOffsetX != null ? s.acOffsetX : Math.round((s.width - acWEff) / 2);
+      const acZEff = s.acOffsetZ != null ? s.acOffsetZ : 100;
+      const spanVal = (wallKey === 'A' || wallKey === 'C') ? acWEff : acDEff;
+      const offsetVal = (wallKey === 'A' || wallKey === 'C') ? acXEff : acZEff;
+      const ar = spanRect(offsetVal, spanVal);
+      const acPxH = 13;
+      svg.appendChild(svgEl('rect', {
+        x: ar.x, y: ceilY, width: ar.w, height: acPxH,
+        fill: '#DCE3E888', stroke: '#8492A0', 'stroke-width': 1,
+      }));
+      const acLbl = svgEl('text', { x: ar.x + ar.w / 2, y: ceilY + acPxH / 2 + 3, 'text-anchor': 'middle', fill: '#5B6B78', 'font-size': 8, 'font-family': "'IBM Plex Mono', monospace" });
+      acLbl.textContent = '에어컨';
+      svg.appendChild(acLbl);
+      // span (width or depth, whichever this wall shows) just above the unit
+      dimLine(svg, ar.x, ceilY - 10, ar.x + ar.w, ceilY - 10, spanVal.toFixed(0) + 'mm', { color: '#6E8199' });
+      // position from this wall's corner, along the inner floor row (same row door/window use)
+      dimLine(svg, cornerX, floorY + 16, ar.nearCornerEdge, floorY + 16, offsetVal.toFixed(0) + 'mm', { color: '#6E8199' });
+      extraDimRow = true;
+    }
+
+    // appliances / furniture projection onto this wall's span axis, with span + height + position dims
+    (s.applianceVisible ? (s.appliances || []) : []).forEach((item) => {
+      const wEff = item.width != null ? item.width : 600;
+      const dEff = item.depth != null ? item.depth : 600;
+      const hEff = item.height != null ? item.height : 1800;
+      const xEff = item.offsetX != null ? item.offsetX : 150;
+      const zEff = item.offsetZ != null ? item.offsetZ : 150;
+      const spanVal = (wallKey === 'A' || wallKey === 'C') ? wEff : dEff;
+      const offsetVal = (wallKey === 'A' || wallKey === 'C') ? xEff : zEff;
+      const ir = spanRect(offsetVal, spanVal);
+      const hPx = Math.min(hEff * scale, floorY - ceilY);
+      svg.appendChild(svgEl('rect', {
+        x: ir.x, y: floorY - hPx, width: ir.w, height: hPx,
+        fill: '#8A7CA855', stroke: '#5B4F79', 'stroke-width': 1,
+      }));
+      const name = item.name && item.name.trim() ? item.name.trim() : '가전';
+      const lbl = svgEl('text', { x: ir.x + ir.w / 2, y: floorY - hPx - 4, 'text-anchor': 'middle', fill: '#5B4F79', 'font-size': 8, 'font-family': "'IBM Plex Mono', monospace" });
+      lbl.textContent = name;
+      svg.appendChild(lbl);
+      // span (width or depth) just above the item's own top
+      dimLine(svg, ir.x, floorY - hPx - 14, ir.x + ir.w, floorY - hPx - 14, spanVal.toFixed(0) + 'mm', { color: '#5B4F79' });
+      // height, on whichever side has room without running off the wall's edges
+      const heightOnRight = ir.x + ir.w + 14 + 30 < x1;
+      const ahx = heightOnRight ? ir.x + ir.w + 14 : ir.x - 14;
+      dimLine(svg, ahx, floorY - hPx, ahx, floorY, hEff.toFixed(0) + 'mm', { color: '#5B4F79' });
+      // position from this wall's corner, along the inner floor row
+      dimLine(svg, cornerX, floorY + 16, ir.nearCornerEdge, floorY + 16, offsetVal.toFixed(0) + 'mm', { color: '#5B4F79' });
+      extraDimRow = true;
+    });
+
     // dimensions: span + ceiling height, pushed one row/column further out when a window or door
     // is already using the inner row/column so nothing overlaps
     const spanDimY = floorY + (extraDimRow ? 34 : 16);
     const heightDimX = x0 - (extraDimRow ? 44 : 20);
     dimLine(svg, x0, spanDimY, x1, spanDimY, span.toFixed(0) + 'mm', { color: '#5C7089' });
     dimLine(svg, heightDimX, floorY, heightDimX, ceilY, s.ceiling.toFixed(0) + 'mm', { color: '#5C7089' });
+  }
+
+  function renderPlan(s) {
+    const svg = el.svgPlan;
+    clear(svg);
+    const VW = 520, VH = 380;
+    const leftPad = 60, rightPad = 170, topPad = 50, bottomPad = 90;
+    const planW = VW - leftPad - rightPad;
+    const planH = VH - topPad - bottomPad;
+    const W = s.width, D = s.depth != null ? s.depth : 4000;
+    const scale = Math.min(planW / W, planH / D);
+    const rw = W * scale, rh = D * scale;
+    const x0 = leftPad + (planW - rw) / 2, y0 = topPad + (planH - rh) / 2;
+    const x1 = x0 + rw, y1 = y0 + rh;
+
+    function wallLine(on, ax, ay, bx, by) {
+      svg.appendChild(svgEl('line', {
+        x1: ax, y1: ay, x2: bx, y2: by,
+        stroke: '#14213D', 'stroke-width': on ? 3 : 1.5,
+        'stroke-dasharray': on ? 'none' : '5 4',
+        opacity: on ? 1 : 0.5,
+      }));
+    }
+    function badge(cx, cy, letter) {
+      svg.appendChild(svgEl('circle', { cx, cy, r: 12, fill: '#14213D' }));
+      const t = svgEl('text', { x: cx, y: cy + 4.5, 'text-anchor': 'middle', fill: '#fff', 'font-size': 12.5, 'font-weight': 700, 'font-family': "'IBM Plex Mono', monospace" });
+      t.textContent = letter;
+      svg.appendChild(t);
+    }
+
+    // walls: A = top (window wall), C = bottom, D = left, B = right
+    wallLine(s.wallBack !== false, x0, y0, x1, y0);
+    wallLine(s.wallFront !== false, x0, y1, x1, y1);
+    wallLine(s.wallLeft !== false, x0, y0, x0, y1);
+    wallLine(s.wallRight !== false, x1, y0, x1, y1);
+
+    badge((x0 + x1) / 2, y0 - 18, 'A');
+    badge((x0 + x1) / 2, y1 + 18, 'C');
+    badge(x0 - 18, (y0 + y1) / 2, 'D');
+    badge(x1 + 18, (y0 + y1) / 2, 'B');
+
+    // curtain box footprint shadow along wall A
+    if (s.hasBox) {
+      const spanMm = s.boxSpan != null ? s.boxSpan : W;
+      const spanW = Math.min(spanMm, W) * scale;
+      const offsetMm = s.boxOffsetX != null ? s.boxOffsetX : (W - spanMm) / 2;
+      const protrudeMm = s.boxWidth != null ? s.boxWidth : 150;
+      const depthPx = Math.max(protrudeMm * scale, 4);
+      svg.appendChild(svgEl('rect', {
+        x: x0 + offsetMm * scale, y: y0, width: spanW, height: depthPx,
+        fill: '#E07B1E22', stroke: '#E07B1E', 'stroke-width': 1.2, 'stroke-dasharray': '3 2',
+      }));
+    }
+
+    // window mark on wall A
+    if (s.winEnabled !== false) {
+      const winWidthMm = s.winWidth != null ? s.winWidth : W * 0.5;
+      const winOffsetMm = s.winOffsetX != null ? s.winOffsetX : (W - winWidthMm) / 2;
+      const wx1 = x0 + winOffsetMm * scale, wx2 = x0 + (winOffsetMm + winWidthMm) * scale;
+      svg.appendChild(svgEl('line', { x1: wx1, y1: y0, x2: wx2, y2: y0, stroke: '#2E8FA6', 'stroke-width': 5 }));
+      const wl = svgEl('text', { x: (wx1 + wx2) / 2, y: y0 - 6, 'text-anchor': 'middle', fill: '#2E8FA6', 'font-size': 10, 'font-family': "'IBM Plex Mono', monospace" });
+      wl.textContent = '창문';
+      svg.appendChild(wl);
+    }
+
+    // door mark on whichever wall it's assigned to
+    if (s.doorEnabled) {
+      const doorOffsetMm = s.doorOffset != null ? s.doorOffset : 300;
+      const doorLenMm = s.doorWidth != null ? s.doorWidth : 800;
+      const doorLenPx = Math.max(doorLenMm * scale, 10);
+      let dx1, dy1, dx2, dy2, lx, ly;
+      if (s.doorWall === 'right') {
+        dy1 = y0 + doorOffsetMm * scale; dy2 = dy1 + doorLenPx; dx1 = dx2 = x1;
+        lx = x1 + 14; ly = (dy1 + dy2) / 2;
+      } else if (s.doorWall === 'front') {
+        dx1 = x0 + doorOffsetMm * scale; dx2 = dx1 + doorLenPx; dy1 = dy2 = y1;
+        lx = (dx1 + dx2) / 2; ly = y1 + 16;
+      } else {
+        dy1 = y0 + doorOffsetMm * scale; dy2 = dy1 + doorLenPx; dx1 = dx2 = x0;
+        lx = x0 - 14; ly = (dy1 + dy2) / 2;
+      }
+      svg.appendChild(svgEl('line', { x1: dx1, y1: dy1, x2: dx2, y2: dy2, stroke: '#C94F4F', 'stroke-width': 5 }));
+      const dl = svgEl('text', { x: lx, y: ly, 'text-anchor': 'middle', fill: '#C94F4F', 'font-size': 10, 'font-family': "'IBM Plex Mono', monospace" });
+      dl.textContent = '문';
+      svg.appendChild(dl);
+    }
+
+    // ceiling AC footprint (accurate x/z, since the plan view is exactly the AC's own coordinate plane)
+    if (s.acEnabled) {
+      const acWEff = s.acWidth != null ? s.acWidth : 900;
+      const acDEff = s.acDepth != null ? s.acDepth : 300;
+      const acXEff = s.acOffsetX != null ? s.acOffsetX : Math.round((W - acWEff) / 2);
+      const acZEff = s.acOffsetZ != null ? s.acOffsetZ : 100;
+      const arx = x0 + acXEff * scale, ary = y0 + acZEff * scale, arw = acWEff * scale, arh = acDEff * scale;
+      svg.appendChild(svgEl('rect', {
+        x: arx, y: ary, width: arw, height: arh,
+        fill: '#DCE3E8AA', stroke: '#8492A0', 'stroke-width': 1.2, 'stroke-dasharray': '3 2',
+      }));
+      const acLbl = svgEl('text', { x: arx + arw / 2, y: ary + arh / 2 + 3, 'text-anchor': 'middle', fill: '#5B6B78', 'font-size': 9, 'font-family': "'IBM Plex Mono', monospace" });
+      acLbl.textContent = '에어컨';
+      svg.appendChild(acLbl);
+      dimLine(svg, arx, ary - 10, arx + arw, ary - 10, acWEff.toFixed(0) + 'mm', { color: '#6E8199' });
+      dimLine(svg, arx - 10, ary, arx - 10, ary + arh, acDEff.toFixed(0) + 'mm', { color: '#6E8199' });
+    }
+
+    // appliances / furniture footprints (accurate x/z)
+    (s.applianceVisible ? (s.appliances || []) : []).forEach((item) => {
+      const wEff = item.width != null ? item.width : 600;
+      const dEff = item.depth != null ? item.depth : 600;
+      const xEff = item.offsetX != null ? item.offsetX : 150;
+      const zEff = item.offsetZ != null ? item.offsetZ : 150;
+      const irx = x0 + xEff * scale, iry = y0 + zEff * scale, irw = wEff * scale, irh = dEff * scale;
+      svg.appendChild(svgEl('rect', {
+        x: irx, y: iry, width: irw, height: irh,
+        fill: '#8A7CA855', stroke: '#5B4F79', 'stroke-width': 1.2,
+      }));
+      const name = item.name && item.name.trim() ? item.name.trim() : '가전';
+      const lbl = svgEl('text', { x: irx + irw / 2, y: iry + irh / 2 + 3, 'text-anchor': 'middle', fill: '#5B4F79', 'font-size': 9, 'font-family': "'IBM Plex Mono', monospace" });
+      lbl.textContent = name;
+      svg.appendChild(lbl);
+      dimLine(svg, irx, iry - 10, irx + irw, iry - 10, wEff.toFixed(0) + 'mm', { color: '#5B4F79' });
+      dimLine(svg, irx - 10, iry, irx - 10, iry + irh, dEff.toFixed(0) + 'mm', { color: '#5B4F79' });
+    });
+
+    // room dimensions
+    dimLine(svg, x0, y1 + 42, x1, y1 + 42, W.toFixed(0) + 'mm', { color: '#5C7089' });
+    dimLine(svg, x1 + 46, y0, x1 + 46, y1, (s.depth != null ? '' : '약 ') + D.toFixed(0) + 'mm', { color: '#5C7089' });
   }
 
   function render() {
@@ -1355,10 +1675,13 @@
     renderWallElevation(el.svgWallB, 'B', s);
     renderWallElevation(el.svgWallC, 'C', s);
     renderWallElevation(el.svgWallD, 'D', s);
+    renderPlan(s);
     render3D(s);
     el.chipWindow.classList.toggle('on', s.winEnabled !== false);
     el.chipBox.classList.toggle('on', !!s.hasBox);
     el.chipDoor.classList.toggle('on', !!s.doorEnabled);
+    el.chipAc.classList.toggle('on', !!s.acEnabled);
+    el.chipAppliance.classList.toggle('on', !!s.applianceVisible);
     el.doorWallsRow.style.display = s.doorEnabled ? 'flex' : 'none';
     el.doorWallsRow.querySelectorAll('[data-wall]').forEach((btn) => {
       btn.classList.toggle('on', btn.dataset.wall === s.doorWall);
@@ -1528,7 +1851,8 @@
       committed = true;
       const val = parseFloat(input.value);
       if (!isNaN(val) && val > 0) {
-        l.editTarget.value = String(Math.round(val));
+        if (typeof l.editTarget === 'function') l.editTarget(val);
+        else l.editTarget.value = String(Math.round(val));
       }
       render();
     };
@@ -1703,22 +2027,24 @@
 
     // core dimension lines: width, depth, ceiling height (all tap-to-edit)
     // placed just inside the room walls so they stay visible looking down into the interior
-    addDim3D(group, labelDefs,
-      new THREE.Vector3(0, 0, 0), new THREE.Vector3(W, 0, 0),
-      new THREE.Vector3(0, 0, 0.25), new THREE.Vector3(W, 0, 0.25),
-      '가로 ' + s.width.toFixed(0), 0x14213D, el.width, s.width);
+    if (catOn('core')) {
+      addDim3D(group, labelDefs,
+        new THREE.Vector3(0, 0, 0), new THREE.Vector3(W, 0, 0),
+        new THREE.Vector3(0, 0, 0.25), new THREE.Vector3(W, 0, 0.25),
+        '가로 ' + s.width.toFixed(0), 0x14213D, el.width, s.width);
 
-    const depthEffMm = Math.round(D * M);
-    const depthLabel = '세로 ' + (s.depth != null ? s.depth.toFixed(0) : '~' + depthEffMm);
-    addDim3D(group, labelDefs,
-      new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, D),
-      new THREE.Vector3(0.25, 0, 0), new THREE.Vector3(0.25, 0, D),
-      depthLabel, 0x14213D, el.depth, depthEffMm);
+      const depthEffMm = Math.round(D * M);
+      const depthLabel = '세로 ' + (s.depth != null ? s.depth.toFixed(0) : '~' + depthEffMm);
+      addDim3D(group, labelDefs,
+        new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, D),
+        new THREE.Vector3(0.25, 0, 0), new THREE.Vector3(0.25, 0, D),
+        depthLabel, 0x14213D, el.depth, depthEffMm);
 
-    addDim3D(group, labelDefs,
-      new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, H, 0),
-      new THREE.Vector3(0.25, 0, 0.25), new THREE.Vector3(0.25, H, 0.25),
-      '천고 ' + s.ceiling.toFixed(0), 0x146366, el.ceiling, s.ceiling);
+      addDim3D(group, labelDefs,
+        new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, H, 0),
+        new THREE.Vector3(0.25, 0, 0.25), new THREE.Vector3(0.25, H, 0.25),
+        '천고 ' + s.ceiling.toFixed(0), 0x146366, el.ceiling, s.ceiling);
+    }
 
     // window: size and position are all tap-to-edit, protrusion depth stays real
     if (s.winEnabled !== false) {
@@ -1741,33 +2067,33 @@
 
       // window width (top edge, offset up)
       const winWidthLabel = '창폭 ' + (s.winWidth != null ? s.winWidth.toFixed(0) : '~' + winWidthEffMm);
-      addDim3D(group, labelDefs,
+      if (catOn('window')) addDim3D(group, labelDefs,
         new THREE.Vector3(winOffsetXM, winSillM + winH, winProtM), new THREE.Vector3(winOffsetXM + winW, winSillM + winH, winProtM),
         new THREE.Vector3(winOffsetXM, winSillM + winH + 0.13, winProtM), new THREE.Vector3(winOffsetXM + winW, winSillM + winH + 0.13, winProtM),
         winWidthLabel, 0x2E8FA6, el.winwidth, winWidthEffMm);
 
       // window height (right edge, offset sideways)
       const winHeightLabel = '창높이 ' + (s.winHeight != null ? s.winHeight.toFixed(0) : '~' + winHeightEffMm);
-      addDim3D(group, labelDefs,
+      if (catOn('window')) addDim3D(group, labelDefs,
         new THREE.Vector3(winOffsetXM + winW, winSillM, winProtM), new THREE.Vector3(winOffsetXM + winW, winSillM + winH, winProtM),
         new THREE.Vector3(winOffsetXM + winW + 0.13, winSillM, winProtM), new THREE.Vector3(winOffsetXM + winW + 0.13, winSillM + winH, winProtM),
         winHeightLabel, 0x2E8FA6, el.winheight, winHeightEffMm);
 
       // window sill height (floor to window bottom, left edge)
       const winSillLabel = '창하단 ' + (s.winSill != null ? s.winSill.toFixed(0) : '~' + winSillEffMm);
-      addDim3D(group, labelDefs,
+      if (catOn('window')) addDim3D(group, labelDefs,
         new THREE.Vector3(winOffsetXM, 0, winProtM), new THREE.Vector3(winOffsetXM, winSillM, winProtM),
         new THREE.Vector3(winOffsetXM - 0.13, 0, winProtM), new THREE.Vector3(winOffsetXM - 0.13, winSillM, winProtM),
         winSillLabel, 0x2E8FA6, el.winsill, winSillEffMm);
 
       // window offset from the left wall (floor level)
       const winOffsetLabel = '창위치 ' + (s.winOffsetX != null ? s.winOffsetX.toFixed(0) : '~' + winOffsetXEffMm);
-      addDim3D(group, labelDefs,
+      if (catOn('window')) addDim3D(group, labelDefs,
         new THREE.Vector3(0, 0, winProtM), new THREE.Vector3(winOffsetXM, 0, winProtM),
         new THREE.Vector3(0, 0.13, winProtM), new THREE.Vector3(winOffsetXM, 0.13, winProtM),
         winOffsetLabel, 0x2E8FA6, el.winoffsetx, winOffsetXEffMm);
 
-      if (s.winProt) {
+      if (s.winProt && catOn('window')) {
         const yy = winCenterY - winH / 2 - 0.12;
         addDim3D(group, labelDefs,
           new THREE.Vector3(winCenterX, yy, 0), new THREE.Vector3(winCenterX, yy, winProtM),
@@ -1789,14 +2115,14 @@
 
         // protrusion depth (from window face outward)
         const hy = handleCenterY - 0.28;
-        addDim3D(group, labelDefs,
+        if (catOn('window')) addDim3D(group, labelDefs,
           new THREE.Vector3(hx, hy, winProtM), new THREE.Vector3(hx, hy, winProtM + handleDepthM),
           new THREE.Vector3(hx, hy, winProtM), new THREE.Vector3(hx, hy, winProtM + handleDepthM),
           '손잡이 +' + handleDepthEff.toFixed(0), 0x5C6670, el.handledepth, handleDepthEff);
 
         // height from floor to handle center
         const handleHeightLabel = '손잡이높이 ' + (s.handleHeight != null ? s.handleHeight.toFixed(0) : '~' + handleHeightEffMm);
-        addDim3D(group, labelDefs,
+        if (catOn('window')) addDim3D(group, labelDefs,
           new THREE.Vector3(hx, 0, winProtM), new THREE.Vector3(hx, handleCenterY, winProtM),
           new THREE.Vector3(hx + 0.16, 0, winProtM), new THREE.Vector3(hx + 0.16, handleCenterY, winProtM),
           handleHeightLabel, 0x5C6670, el.handleheight, handleHeightEffMm);
@@ -1821,19 +2147,19 @@
       group.add(cbox);
       const extraMm = boxCeilingEff - s.ceiling;
       const boxLabel = '박스천고 ' + boxCeilingEff.toFixed(0) + (extraMm >= 0 ? '(+' + extraMm.toFixed(0) + ')' : '(' + extraMm.toFixed(0) + ')');
-      addDim3D(group, labelDefs,
+      if (catOn('box')) addDim3D(group, labelDefs,
         new THREE.Vector3(W, H, 0.03), new THREE.Vector3(W, boxCeilingM, 0.03),
         new THREE.Vector3(W - 0.25, H, 0.03), new THREE.Vector3(W - 0.25, boxCeilingM, 0.03),
         boxLabel, 0xE07B1E, el.boxceiling, boxCeilingEff);
 
       const boxProtrudeLabel = '박스폭 ' + (s.boxWidth != null ? s.boxWidth.toFixed(0) : '~' + boxProtrudeEffMm);
-      addDim3D(group, labelDefs,
+      if (catOn('box')) addDim3D(group, labelDefs,
         new THREE.Vector3(boxLeftX + boxSpanW / 2, boxCeilingM, 0), new THREE.Vector3(boxLeftX + boxSpanW / 2, boxCeilingM, boxOutward),
         new THREE.Vector3(boxLeftX + boxSpanW / 2, boxCeilingM + 0.15, 0), new THREE.Vector3(boxLeftX + boxSpanW / 2, boxCeilingM + 0.15, boxOutward),
         boxProtrudeLabel, 0xE07B1E, el.boxwidth, boxProtrudeEffMm);
 
       const boxSpanLabel = '박스길이 ' + (s.boxSpan != null ? s.boxSpan.toFixed(0) : '~' + boxSpanEffMm);
-      addDim3D(group, labelDefs,
+      if (catOn('box')) addDim3D(group, labelDefs,
         new THREE.Vector3(boxLeftX, boxCeilingM, boxOutward), new THREE.Vector3(boxRightX, boxCeilingM, boxOutward),
         new THREE.Vector3(boxLeftX, boxCeilingM + 0.28, boxOutward), new THREE.Vector3(boxRightX, boxCeilingM + 0.28, boxOutward),
         boxSpanLabel, 0xE07B1E, el.boxspan, boxSpanEffMm);
@@ -1841,7 +2167,7 @@
       // position along the wall: distance from the left wall to the box's near (left) edge,
       // kept up near the box itself (not at floor level) so it doesn't tangle with window/floor dims
       const boxOffsetLabel = '박스위치 ' + (s.boxOffsetX != null ? s.boxOffsetX.toFixed(0) : '~' + boxOffsetXEffMm);
-      addDim3D(group, labelDefs,
+      if (catOn('box')) addDim3D(group, labelDefs,
         new THREE.Vector3(0, H, 0), new THREE.Vector3(boxLeftX, H, 0),
         new THREE.Vector3(0, H + 0.16, 0), new THREE.Vector3(boxLeftX, H + 0.16, 0),
         boxOffsetLabel, 0xE07B1E, el.boxoffsetx, boxOffsetXEffMm);
@@ -1862,15 +2188,15 @@
         const z = Math.min(offsetM + doorW / 2, D - doorW / 2 > 0 ? D - 0.02 : D / 2);
         doorMesh = box(0.05, doorH, doorW, 0xC94F4F, { opacity: 0.65 });
         doorMesh.position.set(W - 0.02, doorH / 2, z);
-        addDim3D(group, labelDefs,
+        if (catOn('door')) addDim3D(group, labelDefs,
           new THREE.Vector3(W, 0.05, 0), new THREE.Vector3(W, 0.05, offsetM),
           new THREE.Vector3(W - 0.25, 0.05, 0), new THREE.Vector3(W - 0.25, 0.05, offsetM),
           doorLabel, 0xC94F4F, el.dooroffset, doorOffsetEff);
-        addDim3D(group, labelDefs,
+        if (catOn('door')) addDim3D(group, labelDefs,
           new THREE.Vector3(W, doorH, z - doorW / 2), new THREE.Vector3(W, doorH, z + doorW / 2),
           new THREE.Vector3(W - 0.16, doorH + 0.1, z - doorW / 2), new THREE.Vector3(W - 0.16, doorH + 0.1, z + doorW / 2),
           doorWidthLabel, 0xC94F4F, el.doorwidth, doorWEffMm);
-        addDim3D(group, labelDefs,
+        if (catOn('door')) addDim3D(group, labelDefs,
           new THREE.Vector3(W, 0, z + doorW / 2 + 0.06), new THREE.Vector3(W, doorH, z + doorW / 2 + 0.06),
           new THREE.Vector3(W - 0.16, 0, z + doorW / 2 + 0.06), new THREE.Vector3(W - 0.16, doorH, z + doorW / 2 + 0.06),
           doorHeightLabel, 0xC94F4F, el.doorheight, doorHEffMm);
@@ -1878,15 +2204,15 @@
         const x = Math.min(offsetM + doorW / 2, W - 0.02 > doorW / 2 ? W - 0.02 : W / 2);
         doorMesh = box(doorW, doorH, 0.05, 0xC94F4F, { opacity: 0.65 });
         doorMesh.position.set(x, doorH / 2, D - 0.02);
-        addDim3D(group, labelDefs,
+        if (catOn('door')) addDim3D(group, labelDefs,
           new THREE.Vector3(0, 0.05, D), new THREE.Vector3(offsetM, 0.05, D),
           new THREE.Vector3(0, 0.05, D - 0.25), new THREE.Vector3(offsetM, 0.05, D - 0.25),
           doorLabel, 0xC94F4F, el.dooroffset, doorOffsetEff);
-        addDim3D(group, labelDefs,
+        if (catOn('door')) addDim3D(group, labelDefs,
           new THREE.Vector3(x - doorW / 2, doorH, D), new THREE.Vector3(x + doorW / 2, doorH, D),
           new THREE.Vector3(x - doorW / 2, doorH + 0.1, D - 0.16), new THREE.Vector3(x + doorW / 2, doorH + 0.1, D - 0.16),
           doorWidthLabel, 0xC94F4F, el.doorwidth, doorWEffMm);
-        addDim3D(group, labelDefs,
+        if (catOn('door')) addDim3D(group, labelDefs,
           new THREE.Vector3(x + doorW / 2 + 0.06, 0, D), new THREE.Vector3(x + doorW / 2 + 0.06, doorH, D),
           new THREE.Vector3(x + doorW / 2 + 0.06, 0, D - 0.16), new THREE.Vector3(x + doorW / 2 + 0.06, doorH, D - 0.16),
           doorHeightLabel, 0xC94F4F, el.doorheight, doorHEffMm);
@@ -1894,21 +2220,117 @@
         const z = Math.min(offsetM + doorW / 2, D - doorW / 2 > 0 ? D - 0.02 : D / 2);
         doorMesh = box(0.05, doorH, doorW, 0xC94F4F, { opacity: 0.65 });
         doorMesh.position.set(0.02, doorH / 2, z);
-        addDim3D(group, labelDefs,
+        if (catOn('door')) addDim3D(group, labelDefs,
           new THREE.Vector3(0, 0.05, 0), new THREE.Vector3(0, 0.05, offsetM),
           new THREE.Vector3(0.25, 0.05, 0), new THREE.Vector3(0.25, 0.05, offsetM),
           doorLabel, 0xC94F4F, el.dooroffset, doorOffsetEff);
-        addDim3D(group, labelDefs,
+        if (catOn('door')) addDim3D(group, labelDefs,
           new THREE.Vector3(0, doorH, z - doorW / 2), new THREE.Vector3(0, doorH, z + doorW / 2),
           new THREE.Vector3(0.16, doorH + 0.1, z - doorW / 2), new THREE.Vector3(0.16, doorH + 0.1, z + doorW / 2),
           doorWidthLabel, 0xC94F4F, el.doorwidth, doorWEffMm);
-        addDim3D(group, labelDefs,
+        if (catOn('door')) addDim3D(group, labelDefs,
           new THREE.Vector3(0, 0, z + doorW / 2 + 0.06), new THREE.Vector3(0, doorH, z + doorW / 2 + 0.06),
           new THREE.Vector3(0.16, 0, z + doorW / 2 + 0.06), new THREE.Vector3(0.16, doorH, z + doorW / 2 + 0.06),
           doorHeightLabel, 0xC94F4F, el.doorheight, doorHEffMm);
       }
       group.add(doorMesh);
     }
+
+    // ceiling AC unit, mounted near the window wall
+    if (s.acEnabled) {
+      const acWEffMm = s.acWidth != null ? s.acWidth : 900;
+      const acDEffMm = s.acDepth != null ? s.acDepth : 300;
+      const acThickEffMm = s.acThick != null ? s.acThick : 220;
+      const acWm = Math.min(acWEffMm / M, W);
+      const acDm = Math.min(acDEffMm / M, D);
+      const acThick = acThickEffMm / M;
+      const acOffsetXEffMm = s.acOffsetX != null ? s.acOffsetX : Math.round((s.width - acWEffMm) / 2);
+      const acOffsetZEffMm = s.acOffsetZ != null ? s.acOffsetZ : 100;
+      const acX = Math.max(Math.min(acOffsetXEffMm / M, W - acWm), 0);
+      const acZ = Math.max(Math.min(acOffsetZEffMm / M, D - acDm), 0);
+      const ac = box(acWm, acThick, acDm, 0xDCE3E8, { opacity: 0.92 });
+      ac.position.set(acX + acWm / 2, H - acThick / 2, acZ + acDm / 2);
+      group.add(ac);
+
+      const acWidthLabel = '에어컨폭 ' + (s.acWidth != null ? s.acWidth.toFixed(0) : '~' + acWEffMm);
+      if (catOn('ac')) addDim3D(group, labelDefs,
+        new THREE.Vector3(acX, H - acThick, 0), new THREE.Vector3(acX + acWm, H - acThick, 0),
+        new THREE.Vector3(acX, H - acThick - 0.14, 0), new THREE.Vector3(acX + acWm, H - acThick - 0.14, 0),
+        acWidthLabel, 0x6E8199, el.acwidth, acWEffMm);
+
+      const acDepthLabel = '에어컨세로 ' + (s.acDepth != null ? s.acDepth.toFixed(0) : '~' + acDEffMm);
+      if (catOn('ac')) addDim3D(group, labelDefs,
+        new THREE.Vector3(acX + acWm + 0.14, H - acThick, acZ), new THREE.Vector3(acX + acWm + 0.14, H - acThick, acZ + acDm),
+        new THREE.Vector3(acX + acWm + 0.14, H, acZ), new THREE.Vector3(acX + acWm + 0.14, H, acZ + acDm),
+        acDepthLabel, 0x6E8199, el.acdepth, acDEffMm);
+
+      const acThickLabel = '에어컨돌출 ' + (s.acThick != null ? s.acThick.toFixed(0) : '~' + acThickEffMm);
+      if (catOn('ac')) addDim3D(group, labelDefs,
+        new THREE.Vector3(acX + acWm + 0.14, H, acZ + acDm / 2), new THREE.Vector3(acX + acWm + 0.14, H - acThick, acZ + acDm / 2),
+        new THREE.Vector3(acX + acWm + 0.3, H, acZ + acDm / 2), new THREE.Vector3(acX + acWm + 0.3, H - acThick, acZ + acDm / 2),
+        acThickLabel, 0x6E8199, el.acthick, acThickEffMm);
+
+      const acOffsetXLabel = '에어컨X ' + (s.acOffsetX != null ? s.acOffsetX.toFixed(0) : '~' + acOffsetXEffMm);
+      if (catOn('ac')) addDim3D(group, labelDefs,
+        new THREE.Vector3(0, 0.05, 0.35), new THREE.Vector3(acX, 0.05, 0.35),
+        new THREE.Vector3(0, 0.05, 0.5), new THREE.Vector3(acX, 0.05, 0.5),
+        acOffsetXLabel, 0x6E8199, el.acoffsetx, acOffsetXEffMm);
+
+      const acOffsetZLabel = '에어컨Z ' + (s.acOffsetZ != null ? s.acOffsetZ.toFixed(0) : '~' + acOffsetZEffMm);
+      if (catOn('ac')) addDim3D(group, labelDefs,
+        new THREE.Vector3(0.6, 0.05, 0), new THREE.Vector3(0.6, 0.05, acZ),
+        new THREE.Vector3(0.75, 0.05, 0), new THREE.Vector3(0.75, 0.05, acZ),
+        acOffsetZLabel, 0x6E8199, el.acoffsetz, acOffsetZEffMm);
+    }
+
+    // appliances / furniture (fridge, styler, etc.) — free-standing boxes with tap-to-edit size & position
+    (s.applianceVisible ? (s.appliances || []) : []).forEach((item, idx) => {
+      const wEffMm = item.width != null ? item.width : 600;
+      const dEffMm = item.depth != null ? item.depth : 600;
+      const hEffMm = item.height != null ? item.height : 1800;
+      const xEffMm = item.offsetX != null ? item.offsetX : 150 + idx * (wEffMm + 150);
+      const zEffMm = item.offsetZ != null ? item.offsetZ : 150;
+      const wM = wEffMm / M, dM = dEffMm / M, hM = hEffMm / M;
+      const xM = Math.max(Math.min(xEffMm / M, W - wM), 0);
+      const zM = Math.max(Math.min(zEffMm / M, D - dM), 0);
+      const applianceColor = 0x8A7CA8;
+      const mesh = box(wM, hM, dM, applianceColor, { opacity: 0.75 });
+      mesh.position.set(xM + wM / 2, hM / 2, zM + dM / 2);
+      group.add(mesh);
+
+      const displayName = item.name && item.name.trim() ? item.name.trim() : ('가전' + (idx + 1));
+      addPointLabel3D(labelDefs, new THREE.Vector3(xM + wM / 2, hM + 0.12, zM + dM / 2), displayName, 0x5B4F79, false);
+
+      if (catOn('appliance')) addDim3D(group, labelDefs,
+        new THREE.Vector3(xM, hM, zM), new THREE.Vector3(xM + wM, hM, zM),
+        new THREE.Vector3(xM, hM + 0.06, zM - 0.14), new THREE.Vector3(xM + wM, hM + 0.06, zM - 0.14),
+        displayName + '폭 ' + (item.width != null ? item.width.toFixed(0) : '~' + wEffMm), 0x5B4F79,
+        (val) => { item.width = val; }, wEffMm);
+
+      if (catOn('appliance')) addDim3D(group, labelDefs,
+        new THREE.Vector3(xM, hM, zM), new THREE.Vector3(xM, hM, zM + dM),
+        new THREE.Vector3(xM - 0.14, hM + 0.06, zM), new THREE.Vector3(xM - 0.14, hM + 0.06, zM + dM),
+        displayName + '깊이 ' + (item.depth != null ? item.depth.toFixed(0) : '~' + dEffMm), 0x5B4F79,
+        (val) => { item.depth = val; }, dEffMm);
+
+      if (catOn('appliance')) addDim3D(group, labelDefs,
+        new THREE.Vector3(xM + wM + 0.02, 0, zM), new THREE.Vector3(xM + wM + 0.02, hM, zM),
+        new THREE.Vector3(xM + wM + 0.16, 0, zM), new THREE.Vector3(xM + wM + 0.16, hM, zM),
+        displayName + '높이 ' + (item.height != null ? item.height.toFixed(0) : '~' + hEffMm), 0x5B4F79,
+        (val) => { item.height = val; }, hEffMm);
+
+      if (catOn('appliance')) addDim3D(group, labelDefs,
+        new THREE.Vector3(0, 0.05, zM + dM / 2), new THREE.Vector3(xM, 0.05, zM + dM / 2),
+        new THREE.Vector3(0, 0.05, zM + dM / 2 + 0.18), new THREE.Vector3(xM, 0.05, zM + dM / 2 + 0.18),
+        displayName + 'X ' + (item.offsetX != null ? item.offsetX.toFixed(0) : '~' + xEffMm), 0x5B4F79,
+        (val) => { item.offsetX = val; }, xEffMm);
+
+      if (catOn('appliance')) addDim3D(group, labelDefs,
+        new THREE.Vector3(xM + wM / 2, 0.05, 0), new THREE.Vector3(xM + wM / 2, 0.05, zM),
+        new THREE.Vector3(xM + wM / 2 + 0.18, 0.05, 0), new THREE.Vector3(xM + wM / 2 + 0.18, 0.05, zM),
+        displayName + 'Z ' + (item.offsetZ != null ? item.offsetZ.toFixed(0) : '~' + zEffMm), 0x5B4F79,
+        (val) => { item.offsetZ = val; }, zEffMm);
+    });
 
     // frame camera target/distance to fit room
     three.target.set(W / 2, H * 0.5, D * 0.5);
@@ -2147,9 +2569,9 @@
   }
 
   // ---------- Events ----------
-  [el.name, el.width, el.depth, el.ceiling, el.boxceiling, el.boxwidth, el.boxspan, el.boxoffsetx, el.windepth, el.winwidth, el.winheight, el.winsill, el.winoffsetx, el.handledepth, el.handleheight, el.dooroffset, el.doorwidth, el.doorheight, el.memo]
+  [el.name, el.width, el.depth, el.ceiling, el.boxceiling, el.boxwidth, el.boxspan, el.boxoffsetx, el.windepth, el.winwidth, el.winheight, el.winsill, el.winoffsetx, el.handledepth, el.handleheight, el.dooroffset, el.doorwidth, el.doorheight, el.acwidth, el.acdepth, el.acoffsetx, el.acoffsetz, el.acthick, el.memo]
     .forEach((input) => input.addEventListener('input', render));
-  [el.hasbox, el.wallback, el.wallfront, el.wallleft, el.wallright, el.winenabled, el.winprot, el.handleprot, el.door].forEach((cb) =>
+  [el.hasbox, el.wallback, el.wallfront, el.wallleft, el.wallright, el.winenabled, el.winprot, el.handleprot, el.door, el.acenabled].forEach((cb) =>
     cb.addEventListener('change', () => { syncSubFields(); render(); })
   );
   el.doorwall.addEventListener('change', render);
@@ -2157,8 +2579,8 @@
   el.newBtn.addEventListener('click', clearForm);
   el.exportAll.addEventListener('click', () => exportRooms(cachedItems));
 
-  // 3D corner toolbar: quick on/off chips for window / curtain box / door
-  [el.chipWindow, el.chipBox, el.chipDoor].forEach((chip) => {
+  // 3D corner toolbar: quick on/off chips for window / curtain box / door / ac / appliance
+  [el.chipWindow, el.chipBox, el.chipDoor, el.chipAc, el.chipAppliance].forEach((chip) => {
     chip.addEventListener('pointerdown', (e) => e.stopPropagation());
   });
   el.chipWindow.addEventListener('click', (e) => {
@@ -2176,6 +2598,16 @@
     el.door.checked = !el.door.checked;
     syncSubFields(); render();
   });
+  el.chipAc.addEventListener('click', (e) => {
+    e.stopPropagation();
+    el.acenabled.checked = !el.acenabled.checked;
+    syncSubFields(); render();
+  });
+  el.chipAppliance.addEventListener('click', (e) => {
+    e.stopPropagation();
+    el.applianceVisible.checked = !el.applianceVisible.checked;
+    render();
+  });
   el.doorWallsRow.querySelectorAll('[data-wall]').forEach((btn) => {
     btn.addEventListener('pointerdown', (e) => e.stopPropagation());
     btn.addEventListener('click', (e) => {
@@ -2183,6 +2615,32 @@
       el.doorwall.value = btn.dataset.wall;
       render();
     });
+  });
+
+  // dimension category filter: only the pressed category's dimension lines render (전체 = all)
+  el.dimFilterRow.querySelectorAll('[data-cat]').forEach((btn) => {
+    btn.addEventListener('pointerdown', (e) => e.stopPropagation());
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      activeDimFilter = btn.dataset.cat;
+      el.dimFilterRow.querySelectorAll('[data-cat]').forEach((b) => {
+        b.classList.toggle('on', b.dataset.cat === activeDimFilter);
+      });
+      render();
+    });
+  });
+
+  el.applianceAdd.addEventListener('click', () => {
+    if (currentAppliances.length >= MAX_APPLIANCES) return;
+    applianceSeq += 1;
+    currentAppliances.push({
+      id: 'appl' + Date.now() + applianceSeq,
+      name: '',
+      width: 600, depth: 600, height: 1800,
+      offsetX: null, offsetZ: null,
+    });
+    updateApplianceRows();
+    render();
   });
 
   el.photoInput.addEventListener('change', async () => {
@@ -2224,6 +2682,7 @@
   // init
   syncSubFields();
   updatePhotoGrid();
+  updateApplianceRows();
   render();
   loadList();
 })();
