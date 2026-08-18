@@ -2629,6 +2629,24 @@
     }
   }
 
+  function svgToDataUrl(svgElement) {
+    let svgStr = new XMLSerializer().serializeToString(svgElement);
+    if (!svgStr.includes('xmlns=')) {
+      svgStr = svgStr.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+    }
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
+  }
+
+  function captureDrawingSnapshots() {
+    return [
+      { label: 'A벽(창문벽)', dataUrl: svgToDataUrl(el.svgWallA) },
+      { label: 'B벽', dataUrl: svgToDataUrl(el.svgWallB) },
+      { label: 'C벽(맞은편)', dataUrl: svgToDataUrl(el.svgWallC) },
+      { label: 'D벽', dataUrl: svgToDataUrl(el.svgWallD) },
+      { label: '평면도', dataUrl: svgToDataUrl(el.svgPlan) },
+    ];
+  }
+
   async function saveRoom() {
     const s = readState();
     if (!s.width && !s.ceiling) {
@@ -2636,7 +2654,7 @@
       return;
     }
     const id = currentId || (Date.now().toString(36) + Math.random().toString(36).slice(2, 7));
-    const record = Object.assign({ id, savedAt: Date.now() }, s);
+    const record = Object.assign({ id, savedAt: Date.now(), drawingSnapshots: captureDrawingSnapshots() }, s);
     if (linkedJobId) record.jobId = linkedJobId;
     try {
       await window.storage.set('rooms:' + id, JSON.stringify(record), false);
@@ -2650,6 +2668,7 @@
     } catch (e) {
       el.status.textContent = '저장 중 오류가 발생했습니다.';
     }
+
   }
 
   // ---------- Events ----------
