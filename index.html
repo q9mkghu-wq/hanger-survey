@@ -582,14 +582,27 @@
     font-family: 'IBM Plex Mono', monospace;
   }
   #curtain-survey-app .csa-3d-dimfilter {
-    position: absolute;
-    top: 8px; left: 10px;
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    flex-wrap: wrap;
     gap: 4px;
-    max-width: 38%;
-    z-index: 5;
+    margin-bottom: 8px;
+  }
+  #curtain-survey-app .csa-filter-chip {
+    background: #fff;
+    border: 1.5px solid var(--navy);
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--navy);
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.02em;
+    transition: background .12s, color .12s;
+  }
+  #curtain-survey-app .csa-filter-chip.on {
+    background: var(--navy);
+    color: #fff;
   }
   #curtain-survey-app .csa-3d-labels {
     position: absolute;
@@ -680,6 +693,15 @@
     <div class="csa-diagram-card csa-3d-card">
       <div class="csa-diagram-title">3D 미리보기</div>
       <div class="csa-diagram-desc">숫자를 탭하면 그 자리에서 값을 바로 고칠 수 있습니다. 지붕은 내부가 보이도록 생략했습니다.</div>
+      <div class="csa-3d-dimfilter" id="csa-3d-dimfilter">
+        <button type="button" class="csa-filter-chip on" data-cat="all">전체</button>
+        <button type="button" class="csa-filter-chip" data-cat="core">기본</button>
+        <button type="button" class="csa-filter-chip" data-cat="box">박스</button>
+        <button type="button" class="csa-filter-chip" data-cat="window">창문</button>
+        <button type="button" class="csa-filter-chip" data-cat="door">문</button>
+        <button type="button" class="csa-filter-chip" data-cat="ac">에어컨</button>
+        <button type="button" class="csa-filter-chip" data-cat="appliance">가전</button>
+      </div>
       <div class="csa-3d-wrap" id="csa-3d-wrap">
         <div class="csa-3d-toolbar" id="csa-3d-toolbar">
           <button type="button" class="csa-3d-chip" id="csa-chip-window">창문</button>
@@ -692,15 +714,6 @@
           <button type="button" class="csa-3d-chip mini" data-wall="left">D벽</button>
           <button type="button" class="csa-3d-chip mini" data-wall="right">B벽</button>
           <button type="button" class="csa-3d-chip mini" data-wall="front">C벽</button>
-        </div>
-        <div class="csa-3d-dimfilter" id="csa-3d-dimfilter">
-          <button type="button" class="csa-3d-chip mini on" data-cat="all">전체</button>
-          <button type="button" class="csa-3d-chip mini" data-cat="core">기본</button>
-          <button type="button" class="csa-3d-chip mini" data-cat="box">박스</button>
-          <button type="button" class="csa-3d-chip mini" data-cat="window">창문</button>
-          <button type="button" class="csa-3d-chip mini" data-cat="door">문</button>
-          <button type="button" class="csa-3d-chip mini" data-cat="ac">에어컨</button>
-          <button type="button" class="csa-3d-chip mini" data-cat="appliance">가전</button>
         </div>
         <div class="csa-3d-labels" id="csa-3d-labels"></div>
         <div class="csa-3d-hint" id="csa-3d-hint">숫자 탭: 값 입력 · 드래그: 회전 · 스크롤: 확대</div>
