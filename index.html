@@ -68,6 +68,17 @@
     font-size: 13px;
     margin-top: 4px;
   }
+  #curtain-survey-app .csa-linked-banner {
+    margin-top: 12px;
+    background: rgba(127,212,214,0.14);
+    border: 1px solid rgba(127,212,214,0.4);
+    color: #CFEFF0;
+    font-size: 12.5px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    display: none;
+  }
+  #curtain-survey-app .csa-linked-banner.show { display: block; }
 
   /* Body layout */
   #curtain-survey-app .csa-body {
@@ -286,6 +297,24 @@
   }
   #curtain-survey-app .csa-record:first-of-type { border-top: none; }
   #curtain-survey-app .csa-record:hover { background: #FAFCFD; }
+  #curtain-survey-app .csa-record.csa-record-linked {
+    background: #EAF7F7;
+    border-left: 3px solid var(--teal);
+    padding-left: 8px;
+    border-radius: 6px;
+  }
+  #curtain-survey-app .csa-record-linked-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--teal);
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-left: 6px;
+    vertical-align: middle;
+    font-family: 'IBM Plex Mono', monospace;
+  }
   #curtain-survey-app .csa-record-name { font-weight: 600; font-size: 14px; }
   #curtain-survey-app .csa-record-meta { font-size: 11.5px; color: var(--ink-soft); margin-top: 2px; font-family:'IBM Plex Mono', monospace; }
   #curtain-survey-app .csa-record-del {
@@ -642,6 +671,7 @@
     <div class="csa-eyebrow">On-site Survey · 현장 실측</div>
     <div class="csa-title">시스템 행거장 설치 사전 실측</div>
     <div class="csa-sub">치수를 입력하면 오른쪽 3D·단면도가 바로 갱신됩니다. 방마다 저장해 여러 곳을 기록하세요.</div>
+    <div class="csa-linked-banner" id="csa-linked-banner"></div>
   </div>
 
   <div class="csa-body">
@@ -956,6 +986,12 @@
   const root = document.getElementById('curtain-survey-app');
   const $ = (sel) => root.querySelector(sel);
 
+  // ---------- Linked job (from 통합보드) ----------
+  const urlParams = new URLSearchParams(location.search);
+  const linkedJobId = urlParams.get('jobId') || null;
+  const linkedName = urlParams.get('name') || '';
+  let autoSelected = false;
+
   const el = {
     name: $('#csa-name'),
     width: $('#csa-width'),
@@ -966,6 +1002,7 @@
     lightbox: $('#csa-lightbox'),
     lightboxImg: $('#csa-lightbox-img'),
     lightboxClose: $('#csa-lightbox-close'),
+    linkedBanner: $('#csa-linked-banner'),
     chipWindow: $('#csa-chip-window'),
     chipBox: $('#csa-chip-box'),
     chipDoor: $('#csa-chip-door'),
@@ -1037,6 +1074,11 @@
   let applianceSeq = 0;
   let activeDimFilter = 'all'; // 'all' | 'core' | 'box' | 'window' | 'door' | 'ac' | 'appliance'
   function catOn(cat) { return activeDimFilter === 'all' || activeDimFilter === cat; }
+
+  if (linkedJobId) {
+    el.linkedBanner.textContent = '📋 통합보드 주문과 연결됨' + (linkedName ? ` — ${linkedName}` : '') + '. 저장하면 이 주문에 실측 기록으로 남습니다.';
+    el.linkedBanner.classList.add('show');
+  }
 
   function updateApplianceRows() {
     el.applianceList.innerHTML = '';
@@ -1206,8 +1248,10 @@
 
   function clearForm() {
     currentId = null;
-    fillState({});
-    el.status.textContent = '새 방을 측정 중입니다. 3D 화면의 숫자를 탭해서 실제 값으로 바꿔주세요.';
+    fillState({ name: linkedName || '' });
+    el.status.textContent = linkedJobId
+      ? '새 실측 기록입니다. 저장하면 통합보드의 이 주문과 자동으로 연결됩니다.'
+      : '새 방을 측정 중입니다. 3D 화면의 숫자를 탭해서 실제 값으로 바꿔주세요.';
   }
 
   function syncSubFields() {
@@ -2357,6 +2401,7 @@
         el.count.textContent = '0';
         cachedItems = [];
         el.exportAll.style.display = 'none';
+        maybeAutoSelect([]);
         return;
       }
       const items = [];
@@ -2367,17 +2412,30 @@
         } catch (e) { /* skip missing */ }
       }
       items.sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
+
+      // when opened from the 통합보드 with a jobId, float any records already linked
+      // to this job to the top of the list so they're easy to spot at a glance
+      if (linkedJobId) {
+        items.sort((a, b) => {
+          const aLinked = a.jobId === linkedJobId ? 1 : 0;
+          const bLinked = b.jobId === linkedJobId ? 1 : 0;
+          if (aLinked !== bLinked) return bLinked - aLinked;
+          return (b.savedAt || 0) - (a.savedAt || 0);
+        });
+      }
+
       cachedItems = items;
       el.count.textContent = String(items.length);
       el.exportAll.style.display = items.length ? 'inline-flex' : 'none';
       if (!items.length) {
         el.list.innerHTML = '<div class="csa-list-empty">저장된 방이 없습니다.</div>';
+        maybeAutoSelect(items);
         return;
       }
       el.list.innerHTML = '';
       items.forEach((item) => {
         const row = document.createElement('div');
-        row.className = 'csa-record';
+        row.className = 'csa-record' + (linkedJobId && item.jobId === linkedJobId ? ' csa-record-linked' : '');
         const boxTxt = item.hasBox && item.boxCeiling != null && item.ceiling != null
           ? ` · 박스구간 ${(item.boxCeiling - item.ceiling >= 0 ? '+' : '') + (item.boxCeiling - item.ceiling).toFixed(0)}mm` : '';
         const firstPhoto = (Array.isArray(item.photos) && item.photos[0]) || item.photo || null;
@@ -2385,10 +2443,11 @@
         const thumbHtml = firstPhoto
           ? `<div class="csa-record-thumb-wrap"><img class="csa-record-thumb" src="${firstPhoto}" alt="">${photoCount > 1 ? `<span class="csa-record-thumb-count">${photoCount}</span>` : ''}</div>`
           : `<div class="csa-record-thumb csa-record-thumb-empty"></div>`;
+        const linkedBadge = (linkedJobId && item.jobId === linkedJobId) ? '<span class="csa-record-linked-badge">이 주문</span>' : '';
         row.innerHTML = `
           ${thumbHtml}
           <div style="flex:1; min-width:0;">
-            <div class="csa-record-name">${escapeHtml(item.name || '이름 없음')}</div>
+            <div class="csa-record-name">${escapeHtml(item.name || '이름 없음')}${linkedBadge}</div>
             <div class="csa-record-meta">가로 ${item.width ?? '-'}mm · 천고 ${item.ceiling ?? '-'}mm${boxTxt}</div>
           </div>
           <button class="csa-record-export" data-id="${item.id}" title="파일로 내보내기">⬇</button>
@@ -2420,8 +2479,27 @@
         }
         el.list.appendChild(row);
       });
+      maybeAutoSelect(items);
     } catch (err) {
       el.list.innerHTML = '<div class="csa-list-empty">목록을 불러오지 못했습니다.</div>';
+    }
+  }
+
+  // On first load only: if this page was opened from the 통합보드 with a jobId and
+  // there's exactly one saved record already linked to it, jump straight into editing
+  // that record instead of a blank form — this is the "이어서 하기" behavior.
+  function maybeAutoSelect(items) {
+    if (autoSelected || !linkedJobId) return;
+    autoSelected = true;
+    const matches = items.filter((i) => i.jobId === linkedJobId);
+    if (matches.length === 1) {
+      currentId = matches[0].id;
+      fillState(matches[0]);
+      el.status.textContent = `이 주문에 저장된 실측 기록("${matches[0].name || '이름 없음'}")을 불러왔습니다. 수정 후 저장하면 갱신됩니다.`;
+    } else if (matches.length > 1) {
+      el.status.textContent = `이 주문에 저장된 기록이 ${matches.length}개 있습니다. 아래 "저장된 방" 목록(연두색 표시)에서 골라주세요.`;
+    } else {
+      clearForm();
     }
   }
 
@@ -2559,6 +2637,7 @@
     }
     const id = currentId || (Date.now().toString(36) + Math.random().toString(36).slice(2, 7));
     const record = Object.assign({ id, savedAt: Date.now() }, s);
+    if (linkedJobId) record.jobId = linkedJobId;
     try {
       await window.storage.set('rooms:' + id, JSON.stringify(record), false);
       const idxRes = await window.storage.get('rooms-index', false).catch(() => null);
@@ -2566,7 +2645,7 @@
       if (!ids.includes(id)) ids.push(id);
       await window.storage.set('rooms-index', JSON.stringify(ids), false);
       currentId = id;
-      el.status.textContent = `저장됨: "${s.name || '이름 없음'}"`;
+      el.status.textContent = `저장됨: "${s.name || '이름 없음'}"` + (linkedJobId ? ' — 이 주문과 연결되었습니다. 다음에 "실측 앱 열기"를 누르면 바로 이 기록으로 연결됩니다.' : '');
       await loadList();
     } catch (e) {
       el.status.textContent = '저장 중 오류가 발생했습니다.';
